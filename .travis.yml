@@ -1,0 +1,4 @@
+language: go
+install: go get -t -v ./...
+go: 1.13
+script: make test

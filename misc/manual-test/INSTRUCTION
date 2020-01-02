@@ -1,0 +1,17 @@
+1. Run:
+  $ ./prepare.sh
+
+2. Check that following command doesn't generate relevant completions
+  $ ./test-cod-ok-cmd.sh --
+
+3. Check that cod suggests to learn completions
+  $ ./test-cod-ok-cmd.sh --help
+
+4. Check that following command generates completions
+  $ ./test-cod-ok-cmd.sh --
+
+5. Check that following command generate paths completions
+  $ ./test-cod-ok-cmd.sh 
+
+6. Check that cod doesn't suggest to learn completions
+  $ ./test-cod-test-failed.sh --help
