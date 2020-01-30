@@ -6,4 +6,16 @@ language: go
 install: go get -t -v ./...
 go: 1.13
 script: make test
+before_deploy:
+    - ./misc/scripts/before_deploy.sh
 
+deploy:
+    provider: releases
+    api_key: $GITHUB_TOKEN
+    file_glob: true
+    file: "release/cod-*"
+    skip_cleanup: true
+    draft: true
+    on:
+        tags: true
+        condition: $TRAVIS_TAG =~ ^v[0-9]+[.][0-9]+([.][0-9]+)?(-pre.*)?$
