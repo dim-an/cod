@@ -8,7 +8,8 @@ auto-completions for your shell.
 [[https://asciinema.org/a/h0SrrNvZVcqoSM4DNyEUrGtQh][file:https://asciinema.org/a/h0SrrNvZVcqoSM4DNyEUrGtQh.svg]]
 
 * Install
-  Download or build =cod= binary for your OS and put it into your =$PATH=.
+  [[https://github.com/dim-an/cod/releases][Download]] or [[#Build][build]] =cod= binary
+  for your OS and put it into your =$PATH=.
 
   Then you need to edit your init script and add few lines.
   
@@ -23,6 +24,16 @@ auto-completions for your shell.
    #+BEGIN_SRC
    source <(cod init $$ zsh)
    #+END_SRC
+
+* Supported shells and operating systems
+   =cod= is known to work with latest version of =zsh= (tested: =v5.5.1= and
+   =5.7.1=) on macOS and Linux.
+
+   =cod= also works with with latest version of =bash= (tested: =4.4.20= and
+   =v5.0.11=) on Linux.
+
+   Note that default =bash= that is bundled with macOS is too old and =cod=
+   doesn't support it.
 
 * Build
   [[https://golang.org/dl/][Go v1.13]] is required.
@@ -64,6 +75,14 @@ auto-completions for your shell.
      - environment variables.
    This info will be used to update command if required (check:
    =cod help update=).
+
+** How cod parses help output
+   =cod= has generic parser that works with most of help pages and
+   recognizes flags (starting with =-=) but doesn't recognize subcommands.
+  
+   It also has a special parser tuned for
+   [[https://docs.python.org/library/argparse.html][python argparse library]]
+   that recognizes flags and subcommands.
 
 * Configuration
   Cod will search config in =$XDG_CONFIG_HOME/cod/config.toml= file
