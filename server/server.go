@@ -39,6 +39,10 @@ import (
 	"time"
 )
 
+const (
+	HelpProcessExecutionTimeout = 1 * time.Second
+)
+
 type Server interface {
 	Serve() error
 	Close() error
@@ -472,9 +476,22 @@ func (s *serverImpl) runHelpCommand(command datastore.Command, ctx context.Conte
 }
 
 func (s *serverImpl) handleAddHelpPage(req *AddHelpPageRequest, _ *util.Warner) (rsp AddHelpPageResponse, err error) {
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, _ := context.WithTimeout(context.Background(), HelpProcessExecutionTimeout)
 	helpPage, err := s.runHelpCommand(req.Command, ctx)
 	if err != nil {
+		if ctx.Err() != nil && errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			err = fmt.Errorf(
+				"timeout of %v exceeded `%v`",
+				HelpProcessExecutionTimeout,
+				shells.Quote(req.Command.Args),
+			)
+		} else {
+			err = fmt.Errorf(
+				"error executing `%v`: %w",
+				shells.Quote(req.Command.Args),
+				err,
+			)
+		}
 		return
 	}
 
