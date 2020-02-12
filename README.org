@@ -39,7 +39,7 @@ auto-completions for your shell.
   [[https://golang.org/dl/][Go v1.13]] is required.
 
   #+BEGIN_SRC
-  git clone git@github.com:dim-an/cod.git
+  git clone https://github.com/dim-an/cod.git
   cd cod
   go build
   #+END_SRC
