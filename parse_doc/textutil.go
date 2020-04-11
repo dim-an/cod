@@ -99,18 +99,6 @@ type lineTree struct {
 
 func (pt *preparedText) FindIndentedParagraph(pattern string, startLine int) *lineTree {
 	var cur int
-	calcIndent := func(line string) int {
-		indent := 0
-		for _, r := range line {
-			if unicode.IsSpace(r) {
-				indent += 1
-			} else {
-				return indent
-			}
-		}
-		return -1
-	}
-
 	var extractTree func() lineTree
 	extractTree = func() (res lineTree) {
 		res = lineTree{
@@ -119,9 +107,9 @@ func (pt *preparedText) FindIndentedParagraph(pattern string, startLine int) *li
 			lineEnd:   cur,
 			children:  nil,
 		}
-		startIndent := calcIndent(pt.lines[cur])
+		startIndent := computeIndent(pt.lines[cur])
 		for cur++; cur < len(pt.lines); {
-			curIndent := calcIndent(pt.lines[cur])
+			curIndent := computeIndent(pt.lines[cur])
 			if curIndent > startIndent {
 				res.children = append(res.children, extractTree())
 			} else {
@@ -141,4 +129,18 @@ func (pt *preparedText) FindIndentedParagraph(pattern string, startLine int) *li
 	}
 
 	return nil
+}
+
+// Compute line indent.
+// Return -1 if line is visibly empty.
+func computeIndent(line string) int {
+	indent := 0
+	for _, r := range line {
+		if unicode.IsSpace(r) {
+			indent += 1
+		} else {
+			return indent
+		}
+	}
+	return -1
 }
