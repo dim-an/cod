@@ -17,10 +17,12 @@ package parse_doc
 import (
 	"cod/datastore"
 	"regexp"
+	"strings"
 )
 
 var flagRegexp = regexp.MustCompile(`(-[-[:word:]]+(?:=?))`)
-var allFlagsRegexp = regexp.MustCompile(`^ \s+(?:(-[-[:word:]]+)(?:[ =A-Z_\[\]]*)?[, \t]*)+`)
+var allFlagsRegexp = regexp.MustCompile(`^\s+(?:(-[-[:word:]]+)(?:[ =A-Z_\[\]]*)?[, \t]*)+`)
+var subCommandRegexp = regexp.MustCompile(`^\s+([-[:word:]]+)`)
 
 type defaultParser struct{}
 
@@ -46,6 +48,56 @@ func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 			completions = append(completions, datastore.Completion{Flag: match})
 		}
 	}
+
+	// Now we are going to search for sub-commands.
+	// Idea is following
+	//   1. We are looking for string that ends with `commands:` (we ignore case)
+	//   2. Then we check indentation of the next line
+	//   3. First word of the line that has same indentation as first line is sub-command.
+	//   4. We skip the line if line indent is bigger than indent of the first line
+	//      (most likely this is continuation of help)
+	//   5. We stop when we find empty line or line that has indent less than indent of the first line.
+	const (
+		Outer = iota
+		FirstLineInside = iota
+		Inside = iota
+	)
+	var state = Outer
+	var prevIndent = -1
+	var currentParagraphIndent = 0
+	for _, line := range context.text.lines {
+		var indent = computeIndent(line)
+		switch state {
+		case Outer:
+			line = strings.ToLower(line)
+			if indent == 0 && strings.HasSuffix(line, "commands:") {
+				state = FirstLineInside
+			}
+		case FirstLineInside:
+			if indent <= prevIndent {
+				state = Outer
+				continue
+			}
+			currentParagraphIndent = indent
+			state = Inside
+			fallthrough
+		case Inside:
+			if indent == currentParagraphIndent {
+				m := subCommandRegexp.FindStringSubmatch(line)
+				if m == nil {
+					// Unexpected line without command going back to safety.
+					state = Outer
+					continue
+				}
+				subCommand := m[1]
+				completions = append(completions, datastore.Completion{Flag: subCommand})
+			} else if indent < currentParagraphIndent {
+				state = Outer
+			} // else if indent > currentParagraphIndent { continue }
+		}
+		prevIndent = indent
+	}
+
 	res.completions = completions
 	return
 }
