@@ -16,13 +16,16 @@ package parse_doc
 
 import (
 	"cod/datastore"
+	"path"
 	"regexp"
 	"strings"
 )
 
 var flagRegexp = regexp.MustCompile(`(-[-[:word:]]+(?:=?))`)
 var allFlagsRegexp = regexp.MustCompile(`^\s+(?:(-[-[:word:]]+)(?:[ =A-Z_\[\]]*)?[, \t]*)+`)
-var subCommandRegexp = regexp.MustCompile(`^\s+([-[:word:]]+)`)
+var indentedSubCommandRegexp = regexp.MustCompile(`^\s+([-[:word:]]+)`)
+var subCommandRegexp = regexp.MustCompile(`^[[:word:]][-[:word:]]*$`)
+var wordRegexp = regexp.MustCompile(`\S+`)
 
 type defaultParser struct{}
 
@@ -34,8 +37,85 @@ func (defaultParser) Name() string {
 	return "default"
 }
 
+func parseUsageSubCommand(args []string, text *preparedText) (res []string) {
+	var words []string
+	foundUsage := false
+
+	// First of all we split the first paragraph of help into words
+	// and make sure that first word is `usage`
+	for _, line := range text.lines {
+		curWords := wordRegexp.FindAllString(line, -1)
+		if curWords == nil {
+			break
+		}
+		if !foundUsage {
+			if strings.ToLower(curWords[0]) != "usage:" &&
+				strings.ToLower(curWords[0]) != "usage" {
+				return
+			}
+			foundUsage = true
+			// Don't need `usage word`
+			words = append(words, curWords[1:]...)
+			continue
+		}
+		words = append(words, curWords...)
+	}
+
+	// Then we make sure that the first word after usage is name of application (we check only basename).
+	executableBase := path.Base(args[0])
+	if words == nil || len(words) < 1 {
+		return
+	}
+
+	if path.Base(words[0]) != executableBase {
+		return
+	}
+
+	argsIdx := 1
+	wordIdx := 1
+
+	// We iterate over words of usage paragraph until we find the word that can't be sub-command.
+	// We check each word in actual command line to double check that it's actual sub-command used.
+outerLoop:
+	for ; wordIdx < len(words); wordIdx += 1 {
+		w := words[wordIdx]
+		if !subCommandRegexp.MatchString(w) {
+			wordIdx += 1
+			break
+		}
+		for ; argsIdx < len(args); argsIdx += 1 {
+			if w == args[wordIdx] {
+				res = append(res, w)
+				continue outerLoop
+			}
+		}
+		res = nil
+		break
+	}
+
+	if res == nil {
+		return
+	}
+
+	// We check that usage paragraph doesn't contain any other application name word.
+	// If it does we are probably dealing with help that describes multiple sub-commands.
+	// We don't support them.
+	for _, w := range words[wordIdx:] {
+		if w == executableBase {
+			res = nil
+			break
+		}
+	}
+
+	return
+}
+
 func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 	res = &parseResult{}
+
+	flagContext := datastore.FlagContext{
+		SubCommand: parseUsageSubCommand(context.args, context.text),
+	}
 
 	var completions []datastore.Completion
 	for _, line := range context.text.lines {
@@ -45,7 +125,7 @@ func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 		}
 		flagsMatch := flagRegexp.FindAllString(m, -1)
 		for _, match := range flagsMatch {
-			completions = append(completions, datastore.Completion{Flag: match})
+			completions = append(completions, datastore.Completion{Flag: match, Context: flagContext})
 		}
 	}
 
@@ -58,9 +138,9 @@ func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 	//      (most likely this is continuation of help)
 	//   5. We stop when we find empty line or line that has indent less than indent of the first line.
 	const (
-		Outer = iota
+		Outer           = iota
 		FirstLineInside = iota
-		Inside = iota
+		Inside          = iota
 	)
 	var state = Outer
 	var prevIndent = -1
@@ -83,14 +163,14 @@ func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 			fallthrough
 		case Inside:
 			if indent == currentParagraphIndent {
-				m := subCommandRegexp.FindStringSubmatch(line)
+				m := indentedSubCommandRegexp.FindStringSubmatch(line)
 				if m == nil {
 					// Unexpected line without command going back to safety.
 					state = Outer
 					continue
 				}
 				subCommand := m[1]
-				completions = append(completions, datastore.Completion{Flag: subCommand})
+				completions = append(completions, datastore.Completion{Flag: subCommand, Context: flagContext})
 			} else if indent < currentParagraphIndent {
 				state = Outer
 			} // else if indent > currentParagraphIndent { continue }

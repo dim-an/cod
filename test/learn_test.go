@@ -248,3 +248,47 @@ func TestLearnArgparseSubCommand(t *testing.T) {
 		"--sub-command2-argument",
 	}, lines)
 }
+
+func TestLearnDefaultSubCommand(t *testing.T) {
+	wb := SetupWorkbench(t)
+	defer wb.Close()
+
+	shellPid := strconv.Itoa(wb.LaunchFakeShell())
+	wb.RunCodCmd("init", shellPid, "bash")
+
+	wb.RunCodCmd("learn", "--", "binaries/default-subcommand.py", "--help")
+	wb.RunCodCmd("learn", "--", "binaries/default-subcommand.py", "sub-command1", "--help")
+	wb.RunCodCmd("learn", "--", "binaries/default-subcommand.py", "sub-command2", "--help")
+
+	getCompletions := func(args ...string) []string {
+		runCodCmdArgs := []string{
+			"api", "complete-words", "--",
+			shellPid,
+			strconv.Itoa(len(args) - 1),
+		}
+		runCodCmdArgs = append(runCodCmdArgs, args...)
+		out := wb.RunCodCmd(runCodCmdArgs...)
+		scan := bufio.NewScanner(strings.NewReader(out))
+		var lines []string
+		for scan.Scan() {
+			lines = append(lines, scan.Text())
+		}
+		require.Nil(t, scan.Err())
+		sort.Strings(lines)
+		return lines
+	}
+	lines := getCompletions("binaries/default-subcommand.py", "-")
+	require.Equal(t, []string{
+		"--no-sub-command-flag",
+	}, lines)
+
+	lines = getCompletions("binaries/default-subcommand.py", "sub-command1", "--s")
+	require.Equal(t, []string{
+		"--sub-command1-flag",
+	}, lines)
+
+	lines = getCompletions("binaries/default-subcommand.py", "sub-command2", "--s")
+	require.Equal(t, []string{
+		"--sub-command2-flag",
+	}, lines)
+}
