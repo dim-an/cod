@@ -179,3 +179,29 @@ Commands:
 
 Run 'docker COMMAND --help' for more information on a command.
 `
+
+func TestParseUsageSubCommand(t *testing.T) {
+	parseUsage := func(args []string, text string) []string {
+		prepared, err := makePreparedText(text)
+		require.NoError(t, err)
+		return parseUsageSubCommand(args, prepared)
+	}
+
+	require.Nil(t, parseUsage([]string{"/usr/bin/docker", "--help"}, dockerHelp))
+
+	{
+		usage := "Usage: foo make [OPTION]... [TARGET]...\n" +
+			"Build and run tests\n"
+		require.Equal(t, []string{"make"}, parseUsage([]string{"/bin/foo", "make", "--help"}, usage))
+
+		require.Equal(t, []string(nil), parseUsage([]string{"/bin/foo", "bake", "--help"}, usage))
+	}
+	{
+		usage := "Usage:\n" +
+			"  foo make [OPTION]... [TARGET]...\n" +
+			"  foo bake [OPTION]... [TARGET]...\n" +
+			"Build and run tests\n"
+		require.Equal(t, []string(nil), parseUsage([]string{"/bin/foo", "make", "--help"}, usage))
+		require.Equal(t, []string(nil), parseUsage([]string{"/bin/foo", "bake", "--help"}, usage))
+	}
+}
