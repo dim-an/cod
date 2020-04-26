@@ -333,7 +333,7 @@ func (argparseParser) Parse(context parseContext) (res *parseResult, err error) 
 		return
 	}
 
-	if filepath.Base(usage.applicationName) != filepath.Base(context.executablePath) {
+	if filepath.Base(usage.applicationName) != filepath.Base(context.args[0]) {
 		err = fmt.Errorf("application in usage doesn't match provided application")
 		return
 	}

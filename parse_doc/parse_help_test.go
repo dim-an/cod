@@ -40,7 +40,7 @@ or available locally via: info '(coreutils) cat invocation'
 `
 
 func TestParseCatHelp(t *testing.T) {
-	desc, err := ParseHelp("cat", catHelp)
+	desc, err := ParseHelp([]string{"cat", "--help"}, catHelp)
 	require.Nil(t, err)
 
 	expected := datastore.HelpPage{
@@ -73,7 +73,7 @@ optional arguments:
 `
 
 func TestParseQuWriteFileHelp(t *testing.T) {
-	desc, err := ParseHelp("qu", quWriteFileHelp)
+	desc, err := ParseHelp([]string{"qu", "--help"}, quWriteFileHelp)
 	require.Nil(t, err)
 
 	expectedContext := datastore.FlagContext{
@@ -215,8 +215,7 @@ or available locally via: info '(coreutils) ls invocation'
 `
 
 func TestParseLsHelp(t *testing.T) {
-	desc, err := ParseHelp("ls", lsHelp)
+	desc, err := ParseHelp([]string{"ls", "--help"}, lsHelp)
 	require.Nil(t, err)
-
 	require.NotNil(t, desc)
 }

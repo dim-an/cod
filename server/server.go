@@ -476,9 +476,11 @@ func (s *serverImpl) runHelpCommand(command datastore.Command, ctx context.Conte
 		return
 	}
 
+	argv := command.Args
+	argv[0] = executablePath
+
 	cmd := exec.CommandContext(ctx, executablePath)
-	cmd.Args = command.Args
-	cmd.Args[0] = executablePath
+	cmd.Args = argv
 	cmd.Env = command.Env
 	cmd.Dir = command.Dir
 	cmd.Stdin = nil
@@ -488,7 +490,7 @@ func (s *serverImpl) runHelpCommand(command datastore.Command, ctx context.Conte
 		err = fmt.Errorf("%w: %v", err, string(helpBytes))
 		return
 	}
-	helpPage, err = parse_doc.ParseHelp(executablePath, string(helpBytes))
+	helpPage, err = parse_doc.ParseHelp(argv, string(helpBytes))
 	if err != nil {
 		return
 	}

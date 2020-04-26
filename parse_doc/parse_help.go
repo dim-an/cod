@@ -31,15 +31,18 @@ var parsers = []HelpParser{
 	makeDefaultParser(),
 }
 
-func ParseHelp(executablePath string, help string) (*datastore.HelpPage, error) {
+func ParseHelp(args []string, help string) (*datastore.HelpPage, error) {
+	if len(args) < 1 {
+		log.Panicf("args cannot be empty")
+	}
 	preparedText, err := makePreparedText(help)
 	if err != nil {
 		return nil, err
 	}
 
 	ctx := parseContext{
-		executablePath: executablePath,
-		text:           preparedText,
+		args: args,
+		text: preparedText,
 	}
 
 	var res *parseResult
@@ -57,7 +60,7 @@ func ParseHelp(executablePath string, help string) (*datastore.HelpPage, error) 
 	}
 
 	helpPage := datastore.HelpPage{
-		ExecutablePath: executablePath,
+		ExecutablePath: args[0],
 		Completions:    res.completions,
 	}
 	helpPage.CheckSum = fmt.Sprintf("%x", sha1.Sum([]byte(help)))

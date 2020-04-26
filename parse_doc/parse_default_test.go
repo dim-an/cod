@@ -20,8 +20,8 @@ import (
 )
 
 func TestParseDocker(t *testing.T) {
-	parseCompletions := func(executablePath, text string) (res []string) {
-		ctx, err := makeParseContext(executablePath, text)
+	parseCompletions := func(args []string, text string) (res []string) {
+		ctx, err := makeParseContext(args, text)
 		require.NoError(t, err)
 
 		parseResult, err := makeDefaultParser().Parse(ctx)
@@ -100,7 +100,7 @@ func TestParseDocker(t *testing.T) {
 		"update",
 		"version",
 		"wait",
-	}, parseCompletions("/usr/bin/docker", dockerHelp))
+	}, parseCompletions([]string{"/usr/bin/docker", "--help"}, dockerHelp))
 }
 
 var dockerHelp = `Usage:	docker COMMAND
