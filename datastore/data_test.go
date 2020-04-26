@@ -48,3 +48,15 @@ func TestCanonizeExecutablePath(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "/home/user/foo", canonized)
 }
+
+func TestIsCommandMatchingContext(t *testing.T) {
+	require.Equal(t, true,
+		IsCommandMatchingContext([]string{"foo", "bar"}, FlagContext{}),
+	)
+	require.Equal(t, true,
+		IsCommandMatchingContext([]string{"foo", "bar"}, FlagContext{SubCommand: []string{"bar"}}),
+	)
+	require.Equal(t, false,
+		IsCommandMatchingContext([]string{"foo", "bar"}, FlagContext{SubCommand: []string{"bar", "baz"}}),
+	)
+}

@@ -73,6 +73,7 @@ function __cod_postexec_zsh() {
 }
 
 function __cod_add_completions() {
+	# -n :: not override existing completions
     compdef -n __cod_complete_zsh "$1"
 }
 
@@ -84,7 +85,11 @@ function __cod_clear_completions() {
 
 function __cod_complete_zsh() {
     local c
-    for c in "${(@f)$(cod api bash-complete -- $$ "${words[1]}" "" "")}" ; do
+	local cs
+	local c_word
+	c_word=$(($CURRENT - 1))
+	cs=("${(f)$(cod api complete-words -- $$ "$c_word" "${words[@]}")}")
+	for c in "${cs[@]}" ; do
         compadd -- "$c"
     done
 	_path_files
@@ -234,7 +239,7 @@ function __cod_complete_bash() {
 	readarray -t FILE_COMPLETIONS < <(compgen -f -X "$FILTEROPT" -- "$2")
 
 	# Generate cod completions.
-    readarray -t COD_COMPLETIONS < <(cod api bash-complete -- $$ "$1" "$2" "$3" 2> /dev/null)
+    readarray -t COD_COMPLETIONS < <(cod api complete-words -- $$ "$COMP_CWORD" "${COMP_WORDS[@]}" 2> /dev/null)
 
 	COMPREPLY=("${FILE_COMPLETIONS[@]}" "${COD_COMPLETIONS[@]}")
 

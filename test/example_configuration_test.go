@@ -35,7 +35,7 @@ func TestExampleConfiguration(t *testing.T) {
 	shellPid := strconv.Itoa(shellPidInt)
 	wb.RunCodCmd("init", shellPid, "bash")
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
-	out := wb.RunCodCmd("api", "bash-complete", shellPid, "--", "binaries/cat.py", "-", "")
+	out := wb.RunCodCmd("api", "complete-words", shellPid, "--", "1", "binaries/cat.py", "-")
 
 	scan := bufio.NewScanner(strings.NewReader(out))
 	var lines []string

@@ -191,10 +191,10 @@ func (s *serverImpl) handleRequest(reqData []byte) (rspData []byte, err error) {
 			CastRequestPayload(payload, &req)
 			rsp, err := s.handleAttach(&req, warner)
 			rspData = MarshalResponse(&rsp, err, warner.Warns)
-		case "BashCompletionRequest":
-			req := BashCompletionRequest{}
+		case "CompleteWordsRequest":
+			req := CompleteWordsRequest{}
 			CastRequestPayload(payload, &req)
-			rsp, err := s.handleBashCompletion(&req, warner)
+			rsp, err := s.handleCompleteWords(&req, warner)
 			rspData = MarshalResponse(&rsp, err, warner.Warns)
 		case "InitScriptRequest":
 			req := InitScriptRequest{}
@@ -303,18 +303,40 @@ func (s *serverImpl) handleAttach(req *AttachRequest, _ *util.Warner) (rsp Attac
 	return
 }
 
-func (s *serverImpl) handleBashCompletion(req *BashCompletionRequest, _ *util.Warner) (rsp BashCompletionResponse, err error) {
-
+func (s *serverImpl) handleCompleteWords(req *CompleteWordsRequest, _ *util.Warner) (rsp CompleteWordsResponse, err error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	completions, err := s.storage.GetCompletions(req.ExecutablePath)
+	if len(req.Words) == 0 {
+		err = fmt.Errorf("cannot complete empty command line")
+		return
+	}
+
+	completions, err := s.storage.GetCompletions(req.Words[0])
 	if err != nil {
 		return
 	}
 
+	cWord := req.CWord
+	var word string
+	if 1 <= cWord && cWord < len(req.Words) {
+		word = req.Words[cWord]
+	}
+
+	if cWord < 1 {
+		cWord = 1
+	}
+	if cWord > len(req.Words) {
+		cWord = len(req.Words)
+	}
+
+	commandPrefix := req.Words[:cWord]
+
 	for _, completion := range completions {
-		if strings.HasPrefix(completion.Flag, req.Word) {
+		ok := strings.HasPrefix(completion.Flag, word) &&
+			datastore.IsCommandMatchingContext(commandPrefix, completion.Context)
+
+		if ok {
 			rsp.Completions = append(rsp.Completions, completion.Flag)
 		}
 	}

@@ -107,10 +107,16 @@ func getCompletionsForExecutable(tx *sql.Tx, executablePath string) (completions
 	}()
 
 	for completionRows.Next() {
-		var context sql.NullString
+		var contextBytes sql.NullString
 		completion := Completion{}
-		err = completionRows.Scan(&completion.Flag, &context)
+		err = completionRows.Scan(&completion.Flag, &contextBytes)
 		util.VerifyPanic(err)
+		if contextBytes.Valid {
+			err = json.Unmarshal([]byte(contextBytes.String), &completion.Context)
+			if err != nil {
+				return
+			}
+		}
 		completions = append(completions, completion)
 	}
 	err = completionRows.Err()
@@ -286,14 +292,19 @@ type sqliteStorage struct {
 
 func insertCompletions(tx *sql.Tx, helpPageId int64, completions []Completion) (err error) {
 	completionStatement, err := tx.Prepare(`
-		insert into Completion(Flag, HelpPageId) values (?, ?)
+		insert into Completion(HelpPageId, Flag, Context) values (?, ?, ?)
 	`)
 	if err != nil {
 		return
 	}
 
 	for _, completion := range completions {
-		_, err = completionStatement.Exec(completion.Flag, helpPageId)
+		var contextBytes []byte
+		contextBytes, err = json.Marshal(completion.Context)
+		if err != nil {
+			return
+		}
+		_, err = completionStatement.Exec(helpPageId, completion.Flag, contextBytes)
 		if err != nil {
 			return
 		}

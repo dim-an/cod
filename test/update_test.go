@@ -33,7 +33,7 @@ func TestUpdateReplace(t *testing.T) {
 	tmpCat := wb.InTmpDataPath("foo")
 	wb.CopyFile("binaries/foo_v1.py", tmpCat)
 	wb.RunCodCmd("learn", "--", tmpCat, "--help")
-	out := wb.RunCodCmd("api", "bash-complete", shellPid, "--", tmpCat, "--", "")
+	out := wb.RunCodCmd("api", "complete-words", shellPid, "--", "1", tmpCat, "--")
 	completions := wb.SplitLines(out)
 	sort.Strings(completions)
 	require.Equal(t, []string{"--bar1", "--foo1"}, completions)
@@ -49,7 +49,7 @@ func TestUpdateReplace(t *testing.T) {
 		},
 		parsed)
 
-	out = wb.RunCodCmd("api", "bash-complete", shellPid, "--", tmpCat, "--", "")
+	out = wb.RunCodCmd("api", "complete-words", shellPid, "--", "1", tmpCat, "--")
 	completions = wb.SplitLines(out)
 	sort.Strings(completions)
 	require.Equal(t, []string{"--bar2", "--foo2", "--qux2"}, completions)

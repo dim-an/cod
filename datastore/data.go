@@ -50,7 +50,7 @@ type Command struct {
 
 type Completion struct {
 	Flag    string
-	Context []string
+	Context FlagContext
 }
 
 type HelpPage struct {
@@ -58,6 +58,11 @@ type HelpPage struct {
 	Completions    []Completion
 	CheckSum       string
 	Command        Command
+}
+
+type FlagContext struct {
+	SubCommand []string `json:"sub-command,omitempty"`
+	Framework  string   `json:"framework,omitempty"`
 }
 
 func CheckHelpPage(helpPage *HelpPage) (err error) {
@@ -113,4 +118,20 @@ func CanonizeExecutablePath(name, workDir, pathVar, homeDir string) (canonized s
 	}
 	canonized = filepath.Clean(canonized)
 	return
+}
+
+func IsCommandMatchingContext(command []string, context FlagContext) bool {
+	subCommand := context.SubCommand
+outerLoop:
+	for contextIndex, commandIndex := 0, 1; contextIndex < len(subCommand); {
+		for ; commandIndex < len(command); commandIndex += 1 {
+			if command[commandIndex] == subCommand[contextIndex] {
+				commandIndex += 1
+				contextIndex += 1
+				continue outerLoop
+			}
+		}
+		return false
+	}
+	return true
 }

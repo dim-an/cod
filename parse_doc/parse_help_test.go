@@ -76,7 +76,10 @@ func TestParseQuWriteFileHelp(t *testing.T) {
 	desc, err := ParseHelp("qu", quWriteFileHelp)
 	require.Nil(t, err)
 
-	expectedContext := []string{"write-file"}
+	expectedContext := datastore.FlagContext{
+		SubCommand: []string{"write-file"},
+		Framework:  "argparse",
+	}
 	expected := datastore.HelpPage{
 		ExecutablePath: "qu",
 		Completions: []datastore.Completion{

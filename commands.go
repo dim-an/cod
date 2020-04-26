@@ -250,22 +250,25 @@ func initMain(pid uint, shell string) {
 	}
 }
 
-func apiBashCompleteMain(_ uint, command, word, prevWord string) {
+func apiCompleteWordsMain(_ uint, cword int, words []string) {
 	app := NewApplication()
 	defer app.Close()
+
+	if len(words) == 0 {
+		fatal(fmt.Errorf("command line cannot be empty"))
+	}
 
 	env := os.Environ()
 	dir, err := os.Getwd()
 	verifyFatal(err)
-	executablePath, err := datastore.CanonizeExecutablePath(command, dir, util.GetPathVar(env), util.GetHomeVar(env))
+	executablePath, err := datastore.CanonizeExecutablePath(words[0], dir, util.GetPathVar(env), util.GetHomeVar(env))
 	verifyFatal(err)
 
-	req := server.BashCompletionRequest{
-		ExecutablePath: executablePath,
-		Word:           word,
-		PrevWord:       prevWord,
+	req := server.CompleteWordsRequest{
+		Words: append([]string{executablePath}, words[1:]...),
+		CWord: cword,
 	}
-	rsp := server.BashCompletionResponse{}
+	rsp := server.CompleteWordsResponse{}
 	err = app.Client().Request(&req, &rsp)
 	verifyFatal(err)
 

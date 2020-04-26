@@ -107,9 +107,9 @@ func (l *usageLexer) skipSpaces() {
 
 type argparseUsage struct {
 	applicationName         string
-	subcommand              []string
 	positionalArgumentNames []string
 	positionalArguments     []string
+	flagContext             datastore.FlagContext
 }
 
 func parseArgparseUsage(lexer *usageLexer) (usage argparseUsage, err error) {
@@ -123,8 +123,9 @@ func parseArgparseUsage(lexer *usageLexer) (usage argparseUsage, err error) {
 	}
 	usage.applicationName = lexer.Token()
 
-	// Then should go tokens of subcommand up to first '['
+	// Then should go tokens of sub-command up to first '['
 	lexer.Next()
+	usage.flagContext.Framework = "argparse"
 	for {
 		if !lexer.Valid() {
 			err = lexer.Err()
@@ -136,7 +137,7 @@ func parseArgparseUsage(lexer *usageLexer) (usage argparseUsage, err error) {
 		if lexer.TokenIsSyntax() {
 			break
 		}
-		usage.subcommand = append(usage.subcommand, lexer.Token())
+		usage.flagContext.SubCommand = append(usage.flagContext.SubCommand, lexer.Token())
 		lexer.Next()
 	}
 
@@ -243,7 +244,7 @@ func tryParseFlagsParagraph(par *lineTree, usage *argparseUsage, res *parseResul
 		for _, flag := range allFlags {
 			res.completions = append(res.completions, datastore.Completion{
 				Flag:    flag,
-				Context: usage.subcommand,
+				Context: usage.flagContext,
 			})
 		}
 	}
@@ -260,7 +261,7 @@ func extractPositionalArgs(par *lineTree, usage *argparseUsage, res *parseResult
 		}
 		completions = append(completions, datastore.Completion{
 			Flag:    arg,
-			Context: usage.subcommand,
+			Context: usage.flagContext,
 		})
 	}
 	res.completions = append(res.completions, completions...)

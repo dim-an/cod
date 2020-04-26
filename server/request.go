@@ -30,19 +30,13 @@ type AttachRequest struct {
 type AttachResponse struct {
 }
 
-type BashCompletionRequest struct {
-	CompLine  string
-	CompPoint int
-
-	CompWords []string
-	CompCword int
-
-	ExecutablePath string
-	Word           string
-	PrevWord       string
+type CompleteWordsRequest struct {
+	// First word of the `Words` must be executable path.
+	Words []string
+	CWord int
 }
 
-type BashCompletionResponse struct {
+type CompleteWordsResponse struct {
 	Completions []string
 }
 
@@ -169,7 +163,7 @@ func getMessageName(msg interface{}) string {
 func isRequest(msg interface{}) bool {
 	switch msg.(type) {
 	case *AttachRequest,
-		*BashCompletionRequest,
+		*CompleteWordsRequest,
 		*DetachRequest,
 		*InitScriptRequest,
 		*ListClientsRequest,
@@ -181,7 +175,7 @@ func isRequest(msg interface{}) bool {
 		*UpdateHelpPageRequest:
 		return true
 	case *AttachResponse,
-		*BashCompletionResponse,
+		*CompleteWordsResponse,
 		*DetachResponse,
 		*InitScriptResponse,
 		*ListClientsResponse,
