@@ -115,11 +115,10 @@ func main() {
 
 	apiListClients := api.Command("list-clients", "help list all attached shells").Hidden()
 
-	apiBashComplete := api.Command("bash-complete", "Generate completion list for particular command.").Hidden()
-	addPidArg(apiBashComplete)
-	apiBashCompleteCommand := apiBashComplete.Arg("command", "Command being completed.").Required().String()
-	apiBashCompleteWord := apiBashComplete.Arg("word", "Word being completed.").Required().String()
-	apiBashCompletePrevWord := apiBashComplete.Arg("prev-word", "Word before word being completed.").Required().String()
+	apiCompleteWords := api.Command("complete-words", "Get completions for given command line.").Hidden()
+	addPidArg(apiCompleteWords)
+	apiCompleteWordsCWord := apiCompleteWords.Arg("c-word", "Index of a word being completed.").Required().Int()
+	apiCompleteWordsWords := apiCompleteWords.Arg("words", "Command line being completed.").Required().Strings()
 
 	apiForkedDaemon := api.Command("forked-daemon", "Helper method to run a daemon").Hidden()
 	notifyPid := apiForkedDaemon.Arg("pid", "Pid to notify after command start").Required().Int()
@@ -152,8 +151,8 @@ func main() {
 		apiPollUpdatesMain(pid)
 	case apiPostexec.FullCommand():
 		apiPostexecMain(pid, *apiPostexecCommand)
-	case apiBashComplete.FullCommand():
-		apiBashCompleteMain(pid, *apiBashCompleteCommand, *apiBashCompleteWord, *apiBashCompletePrevWord)
+	case apiCompleteWords.FullCommand():
+		apiCompleteWordsMain(pid, *apiCompleteWordsCWord, *apiCompleteWordsWords)
 	case apiListClients.FullCommand():
 		apiListClientsMain()
 	case apiForkedDaemon.FullCommand():
