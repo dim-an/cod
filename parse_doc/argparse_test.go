@@ -22,8 +22,8 @@ import (
 )
 
 func TestParseArgparse(t *testing.T) {
-	parseCompletions := func(executablePath, text string) (res []string) {
-		ctx, err := makeParseContext(executablePath, text)
+	parseCompletions := func(args []string, text string) (res []string) {
+		ctx, err := makeParseContext(args, text)
 		require.NoError(t, err)
 
 		parseResult, err := makeArgparseParser().Parse(ctx)
@@ -46,7 +46,7 @@ func TestParseArgparse(t *testing.T) {
 			"--help",
 			"--version",
 		},
-		parseCompletions("/usr/bin/asciinema", asciicinemaHelp),
+		parseCompletions([]string{"/usr/bin/asciinema", "--help"}, asciicinemaHelp),
 	)
 
 	require.Equal(
@@ -63,17 +63,17 @@ func TestParseArgparse(t *testing.T) {
 			"-v",
 			"--verbose",
 		},
-		parseCompletions("/home/user/.local/bin/do.py", doPyHelp),
+		parseCompletions([]string{"/home/user/.local/bin/do.py", "--help"}, doPyHelp),
 	)
 }
 
 func TestParseArgparseContext(t *testing.T) {
-	ctx, err := makeParseContext("/usr/bin/asciinema", asciinemaRecHelp)
+	ctx, err := makeParseContext([]string{"/usr/bin/asciinema", "rec", "--help"}, asciinemaRecHelp)
 	require.NoError(t, err)
 
 	parseResult, err := makeArgparseParser().Parse(ctx)
 	require.NoError(t, err)
-	sort.Slice(parseResult.completions, func (i, j int) bool {
+	sort.Slice(parseResult.completions, func(i, j int) bool {
 		return parseResult.completions[i].Flag < parseResult.completions[j].Flag
 	})
 	argparseContext := func(subCommand []string) datastore.FlagContext {

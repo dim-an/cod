@@ -24,17 +24,17 @@ import (
 )
 
 type parseContext struct {
-	executablePath string
-	text           *preparedText
+	args []string
+	text *preparedText
 }
 
-func makeParseContext(executablePath, helpText string) (ctx parseContext, err error) {
+func makeParseContext(args []string, helpText string) (ctx parseContext, err error) {
 	ctx.text, err = makePreparedText(helpText)
 	if err != nil {
 		return
 	}
 
-	ctx.executablePath = executablePath
+	ctx.args = args
 	return
 }
 
