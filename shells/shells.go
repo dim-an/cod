@@ -239,7 +239,7 @@ function __cod_complete_bash() {
 	readarray -t FILE_COMPLETIONS < <(compgen -f -X "$FILTEROPT" -- "$2")
 
 	# Generate cod completions.
-    readarray -t COD_COMPLETIONS < <(cod api complete-words -- $$ "$COMP_CWORD" "${COMP_WORDS[@]}" 2> /dev/null)
+	readarray -t COD_COMPLETIONS < <(cod api complete-words -- $$ "$COMP_CWORD" "${COMP_WORDS[@]}" 2> /dev/null)
 
 	COMPREPLY=("${FILE_COMPLETIONS[@]}" "${COD_COMPLETIONS[@]}")
 
