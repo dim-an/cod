@@ -15,8 +15,8 @@
 package datastore
 
 import (
-	"cod/util"
 	"fmt"
+	"github.com/dim-an/cod/util"
 	"os"
 	"path/filepath"
 	"strings"

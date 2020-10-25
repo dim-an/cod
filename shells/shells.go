@@ -15,8 +15,8 @@
 package shells
 
 import (
-	"cod/datastore"
 	"fmt"
+	"github.com/dim-an/cod/datastore"
 	"path/filepath"
 	"strings"
 )

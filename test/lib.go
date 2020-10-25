@@ -16,9 +16,9 @@ package test
 
 import (
 	"bufio"
-	"cod/shells"
-	"cod/util"
 	"fmt"
+	"github.com/dim-an/cod/shells"
+	"github.com/dim-an/cod/util"
 	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"

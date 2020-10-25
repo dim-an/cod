@@ -15,10 +15,10 @@
 package datastore
 
 import (
-	"cod/util"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/dim-an/cod/util"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )

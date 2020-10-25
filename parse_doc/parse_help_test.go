@@ -15,9 +15,9 @@
 package parse_doc
 
 import (
-	"cod/datastore"
 	"testing"
 
+	"github.com/dim-an/cod/datastore"
 	"github.com/stretchr/testify/require"
 )
 

@@ -15,9 +15,9 @@
 package datastore
 
 import (
-	"cod/util"
 	"crypto/sha1"
 	"fmt"
+	"github.com/dim-an/cod/util"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"

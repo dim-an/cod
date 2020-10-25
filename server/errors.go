@@ -15,9 +15,9 @@
 package server
 
 import (
-	"cod/util"
 	"errors"
 	"fmt"
+	"github.com/dim-an/cod/util"
 )
 
 const (

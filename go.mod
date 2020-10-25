@@ -1,4 +1,4 @@
-module cod
+module github.com/dim-an/cod
 
 go 1.14
 

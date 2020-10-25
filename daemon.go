@@ -15,11 +15,11 @@
 package main
 
 import (
-	"cod/server"
-	"cod/shells"
-	"cod/util"
 	"errors"
 	"fmt"
+	"github.com/dim-an/cod/server"
+	"github.com/dim-an/cod/shells"
+	"github.com/dim-an/cod/util"
 	"golang.org/x/sys/unix"
 	"log"
 	"os"
