@@ -15,8 +15,8 @@
 package parse_doc
 
 import (
-	"cod/datastore"
 	"fmt"
+	"github.com/dim-an/cod/datastore"
 	"path/filepath"
 	"regexp"
 	"strings"

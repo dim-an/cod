@@ -16,8 +16,8 @@ package server
 
 import (
 	"bufio"
-	"cod/util"
 	"fmt"
+	"github.com/dim-an/cod/util"
 	"net"
 	"time"
 )

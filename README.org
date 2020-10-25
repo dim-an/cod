@@ -44,6 +44,12 @@ auto-completions for your shell.
   go build
   #+END_SRC
 
+  or
+
+  #+BEGIN_SRC
+  go get -u github.com/dim-an/cod
+  #+END_SRC
+
 * Overview
   Cod checks each command you run in the shell. When cod detects usage of
   =--help= flag it asks if you want it to learn this command. If you choose

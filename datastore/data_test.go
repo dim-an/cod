@@ -15,7 +15,7 @@
 package datastore
 
 import (
-	"cod/util"
+	"github.com/dim-an/cod/util"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

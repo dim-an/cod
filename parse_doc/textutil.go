@@ -16,8 +16,8 @@ package parse_doc
 
 import (
 	"bufio"
-	"cod/datastore"
 	"errors"
+	"github.com/dim-an/cod/datastore"
 	"io"
 	"strings"
 	"unicode"

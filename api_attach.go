@@ -15,8 +15,8 @@
 package main
 
 import (
-	"cod/server"
 	"fmt"
+	"github.com/dim-an/cod/server"
 	"time"
 )
 

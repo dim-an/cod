@@ -15,9 +15,9 @@
 package shells
 
 import (
-	"cod/shells/asciitable"
-	"cod/util"
 	"fmt"
+	"github.com/dim-an/cod/shells/asciitable"
+	"github.com/dim-an/cod/util"
 	"io"
 	"strings"
 )

@@ -15,10 +15,10 @@
 package server
 
 import (
-	"cod/datastore"
-	"cod/util"
 	"errors"
 	"fmt"
+	"github.com/dim-an/cod/datastore"
+	"github.com/dim-an/cod/util"
 	"github.com/pelletier/go-toml"
 	"io/ioutil"
 	"os"

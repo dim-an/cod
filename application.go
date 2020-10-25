@@ -15,7 +15,7 @@
 package main
 
 import (
-	"cod/server"
+	"github.com/dim-an/cod/server"
 )
 
 type Application interface {

@@ -15,10 +15,10 @@
 package server
 
 import (
-	"cod/datastore"
-	"cod/util"
 	"encoding/json"
 	"fmt"
+	"github.com/dim-an/cod/datastore"
+	"github.com/dim-an/cod/util"
 	"reflect"
 )
 

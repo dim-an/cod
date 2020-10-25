@@ -15,9 +15,9 @@
 package parse_doc
 
 import (
-	"cod/datastore"
 	"crypto/sha1"
 	"fmt"
+	"github.com/dim-an/cod/datastore"
 	"log"
 )
 
