@@ -41,12 +41,13 @@ func TestParseDocker(t *testing.T) {
 		"-l",
 		"--log-level",
 		"--tls",
+		"--tlsverify",
 		"--tlscacert",
 		"--tlscert",
 		"--tlskey",
-		"--tlsverify",
 		"-v",
 		"--version",
+		"--help",
 		"checkpoint",
 		"config",
 		"container",
@@ -205,4 +206,8 @@ func TestParseUsageSubCommand(t *testing.T) {
 		require.Equal(t, []string(nil), parseUsage([]string{"/bin/foo", "make", "--help"}, usage))
 		require.Equal(t, []string(nil), parseUsage([]string{"/bin/foo", "bake", "--help"}, usage))
 	}
+}
+
+func TestIsJavaStyleFlag(t *testing.T) {
+	require.Equal(t, true, isJavaStyleFlag("-vET"))
 }

@@ -22,8 +22,10 @@ import (
 	"github.com/dim-an/cod/datastore"
 )
 
-var flagRegexp = regexp.MustCompile(`(-[-[:word:]]+(?:=?))`)
-var allFlagsRegexp = regexp.MustCompile(`^\s+(?:(-[-[:word:]]+)(?:[ =A-Z_\[\]]*)?[, \t]*)+`)
+// NB. reminder (?: ... ) is a non-capturing group
+var flagRegexp = regexp.MustCompile(`(?:^|[\s\[|])(-[-[:word:]]+(?:=?))`)
+var javaStyleFlagRegexp = regexp.MustCompile(`^-[[:word:]]{2,}$`)
+
 var indentedSubCommandRegexp = regexp.MustCompile(`^\s+([-[:word:]]+)`)
 var subCommandRegexp = regexp.MustCompile(`^[[:word:]][-[:word:]]*$`)
 var wordRegexp = regexp.MustCompile(`\S+`)
@@ -36,6 +38,10 @@ func makeDefaultParser() HelpParser {
 
 func (defaultParser) Name() string {
 	return "default"
+}
+
+func isJavaStyleFlag(flag string) bool {
+	return javaStyleFlagRegexp.MatchString(flag)
 }
 
 func parseUsageSubCommand(args []string, text *preparedText) (res []string) {
@@ -119,15 +125,35 @@ func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 	}
 
 	var completions []datastore.Completion
+	var discoveredFlagMap = make(map[string]bool)
+	var discoveredFlags []string
 	for _, line := range context.text.lines {
-		m := allFlagsRegexp.FindString(line)
-		if len(m) == 0 {
+		flagsMatch := flagRegexp.FindAllStringSubmatch(line, -1)
+		for _, match := range flagsMatch {
+			flag := match[1]
+			if !discoveredFlagMap[flag] {
+				discoveredFlags = append(discoveredFlags, flag)
+				discoveredFlagMap[flag] = true
+			}
+		}
+	}
+
+	// Sometimes we find examples of merged single letter options like `-xzf` (== -x -z -f) in help messages.
+	// We want to distinguish them from java style-options like `-server`.
+	// We want to guess if we are dealing with gnu style or java style.
+	isGnuLike := false
+	for _, flag := range discoveredFlags {
+		if strings.HasPrefix(flag, "--") {
+			isGnuLike = true
+			break
+		}
+	}
+
+	for _, flag := range discoveredFlags {
+		if isGnuLike && isJavaStyleFlag(flag) {
 			continue
 		}
-		flagsMatch := flagRegexp.FindAllString(m, -1)
-		for _, match := range flagsMatch {
-			completions = append(completions, datastore.Completion{Flag: match, Context: flagContext})
-		}
+		completions = append(completions, datastore.Completion{Flag: flag, Context: flagContext})
 	}
 
 	// Now we are going to search for sub-commands.

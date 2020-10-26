@@ -219,3 +219,109 @@ func TestParseLsHelp(t *testing.T) {
 	require.Nil(t, err)
 	require.NotNil(t, desc)
 }
+
+func TestMultipleFlagOccurrences(t *testing.T) {
+	fooHelp := `
+	usage: foo <flags>
+	
+	--help show help
+	--foo some stuff
+	--bar other stuff (see also --foo)
+`
+
+	desc, err := ParseHelp([]string{"foo", "--help"}, fooHelp)
+	require.Nil(t, err)
+
+	expected := datastore.HelpPage{
+		ExecutablePath: "foo",
+		Completions: []datastore.Completion{
+			{Flag: "--help"},
+			{Flag: "--foo"},
+			{Flag: "--bar"},
+		},
+		CheckSum: "1f32a5ebf4758e9a89fca0b0de6aed8761cf6f92",
+	}
+	require.Equal(t, expected, *desc)
+}
+
+func TestJavaStyleInclusion(t *testing.T) {
+	fooHelp := `
+	usage: foo <flags>
+	
+	--help show help
+	-v --verbose be verbose
+	-E --expand expand something
+	-T --text expand something
+	-a	same as -vET
+`
+
+	desc, err := ParseHelp([]string{"foo", "--help"}, fooHelp)
+	require.Nil(t, err)
+
+	expected := datastore.HelpPage{
+		ExecutablePath: "foo",
+		Completions: []datastore.Completion{
+			{Flag: "--help"},
+			{Flag: "-v"},
+			{Flag: "--verbose"},
+			{Flag: "-E"},
+			{Flag: "--expand"},
+			{Flag: "-T"},
+			{Flag: "--text"},
+			{Flag: "-a"},
+		},
+		CheckSum: "ab2bce9df3ee2ff08f41d3c8142f5e52ad6c1686",
+	}
+	require.Equal(t, expected, *desc)
+}
+
+func TestJavaStyle(t *testing.T) {
+	fooHelp := `
+	usage: foo <flags>
+	
+	-h show help
+	-v be verbose
+	-E expand something
+	-T expand something
+	-a same as -vET
+`
+
+	desc, err := ParseHelp([]string{"foo", "-h"}, fooHelp)
+	require.Nil(t, err)
+
+	expected := datastore.HelpPage{
+		ExecutablePath: "foo",
+		Completions: []datastore.Completion{
+			{Flag: "-h"},
+			{Flag: "-v"},
+			{Flag: "-E"},
+			{Flag: "-T"},
+			{Flag: "-a"},
+			{Flag: "-vET"}, // it might be
+		},
+		CheckSum: "5854f53d08357f31d7c9e5d478b12a0a2236c976",
+	}
+	require.Equal(t, expected, *desc)
+}
+
+func TestOptionInVeryBeginningOfLine(t *testing.T) {
+	fooHelp := `
+usage: foo <flags>
+	
+-h show help
+--foo foo option
+`
+
+	desc, err := ParseHelp([]string{"foo", "-h"}, fooHelp)
+	require.Nil(t, err)
+
+	expected := datastore.HelpPage{
+		ExecutablePath: "foo",
+		Completions: []datastore.Completion{
+			{Flag: "-h"},
+			{Flag: "--foo"}, // it might be
+		},
+		CheckSum: "da4c610510f4addb1089ae41896d09bfd0ccd790",
+	}
+	require.Equal(t, expected, *desc)
+}
