@@ -16,10 +16,11 @@ package datastore
 
 import (
 	"fmt"
-	"github.com/dim-an/cod/util"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/dim-an/cod/util"
 )
 
 var (

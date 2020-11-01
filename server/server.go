@@ -20,11 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dim-an/cod/datastore"
-	"github.com/dim-an/cod/parse_doc"
-	"github.com/dim-an/cod/shells"
-	"github.com/dim-an/cod/util"
-	"golang.org/x/sys/unix"
 	"io/ioutil"
 	"log"
 	"net"
@@ -37,6 +32,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/dim-an/cod/datastore"
+	"github.com/dim-an/cod/parse_doc"
+	"github.com/dim-an/cod/shells"
+	"github.com/dim-an/cod/util"
+	"golang.org/x/sys/unix"
 )
 
 const (

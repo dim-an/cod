@@ -16,9 +16,10 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"os"
 	"path"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var AppName = "cod"

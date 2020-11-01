@@ -17,9 +17,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+
 	"github.com/dim-an/cod/datastore"
 	"github.com/dim-an/cod/util"
-	"reflect"
 )
 
 type AttachRequest struct {

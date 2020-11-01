@@ -17,14 +17,15 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/dim-an/cod/datastore"
-	"github.com/dim-an/cod/server"
-	"github.com/dim-an/cod/shells"
-	"github.com/dim-an/cod/util"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/dim-an/cod/datastore"
+	"github.com/dim-an/cod/server"
+	"github.com/dim-an/cod/shells"
+	"github.com/dim-an/cod/util"
 )
 
 func summarizeLearning(rsp *server.AddHelpPageResponse) (err error) {

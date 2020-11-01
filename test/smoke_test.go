@@ -16,11 +16,12 @@ package test
 
 import (
 	"errors"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/sys/unix"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 )
 
 func TestDaemonSmoke(t *testing.T) {

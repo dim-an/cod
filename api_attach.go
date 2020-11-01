@@ -16,8 +16,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/dim-an/cod/server"
 	"time"
+
+	"github.com/dim-an/cod/server"
 )
 
 func getLogFileBaseName(t time.Time) string {

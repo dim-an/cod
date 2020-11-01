@@ -17,8 +17,9 @@ package parse_doc
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/dim-an/cod/datastore"
 	"log"
+
+	"github.com/dim-an/cod/datastore"
 )
 
 type HelpParser interface {

@@ -17,13 +17,14 @@ package datastore
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/dim-an/cod/util"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/dim-an/cod/util"
+	"github.com/stretchr/testify/require"
 )
 
 type testSqliteStorage struct {

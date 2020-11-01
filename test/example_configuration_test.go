@@ -16,10 +16,11 @@ package test
 
 import (
 	"bufio"
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestExampleConfiguration(t *testing.T) {

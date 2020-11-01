@@ -15,10 +15,11 @@
 package parse_doc
 
 import (
-	"github.com/dim-an/cod/datastore"
 	"path"
 	"regexp"
 	"strings"
+
+	"github.com/dim-an/cod/datastore"
 )
 
 var flagRegexp = regexp.MustCompile(`(-[-[:word:]]+(?:=?))`)

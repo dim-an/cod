@@ -15,10 +15,11 @@
 package parse_doc
 
 import (
-	"github.com/dim-an/cod/datastore"
-	"github.com/stretchr/testify/require"
 	"sort"
 	"testing"
+
+	"github.com/dim-an/cod/datastore"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseArgparse(t *testing.T) {

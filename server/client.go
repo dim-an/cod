@@ -17,9 +17,10 @@ package server
 import (
 	"bufio"
 	"fmt"
-	"github.com/dim-an/cod/util"
 	"net"
 	"time"
+
+	"github.com/dim-an/cod/util"
 )
 
 type Client struct {

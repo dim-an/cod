@@ -17,10 +17,11 @@ package parse_doc
 import (
 	"bufio"
 	"errors"
-	"github.com/dim-an/cod/datastore"
 	"io"
 	"strings"
 	"unicode"
+
+	"github.com/dim-an/cod/datastore"
 )
 
 type parseContext struct {

@@ -16,10 +16,11 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
 	"unicode"
+
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type UI interface {
