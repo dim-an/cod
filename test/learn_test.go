@@ -17,13 +17,14 @@ package test
 import (
 	"bufio"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLearn(t *testing.T) {

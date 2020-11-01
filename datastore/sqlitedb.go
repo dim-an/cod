@@ -18,9 +18,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"github.com/dim-an/cod/util"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
 )
 
 var CurrentSchemaVersion = 1

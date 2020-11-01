@@ -15,9 +15,10 @@
 package datastore
 
 import (
+	"testing"
+
 	"github.com/dim-an/cod/util"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestCanonizeExecutablePath(t *testing.T) {

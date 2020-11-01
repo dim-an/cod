@@ -16,10 +16,11 @@ package parse_doc
 
 import (
 	"fmt"
-	"github.com/dim-an/cod/datastore"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/dim-an/cod/datastore"
 )
 
 type usageLexer struct {

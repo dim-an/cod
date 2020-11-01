@@ -15,11 +15,12 @@
 package test
 
 import (
-	"github.com/stretchr/testify/require"
 	"os"
 	"sort"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateReplace(t *testing.T) {

@@ -16,9 +16,10 @@ package shells
 
 import (
 	"fmt"
-	"github.com/dim-an/cod/datastore"
 	"path/filepath"
 	"strings"
+
+	"github.com/dim-an/cod/datastore"
 )
 
 type ShellScriptGenerator interface {

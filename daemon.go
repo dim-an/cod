@@ -17,10 +17,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/dim-an/cod/server"
-	"github.com/dim-an/cod/shells"
-	"github.com/dim-an/cod/util"
-	"golang.org/x/sys/unix"
 	"log"
 	"os"
 	"os/exec"
@@ -28,6 +24,11 @@ import (
 	"path"
 	"strconv"
 	"time"
+
+	"github.com/dim-an/cod/server"
+	"github.com/dim-an/cod/shells"
+	"github.com/dim-an/cod/util"
+	"golang.org/x/sys/unix"
 )
 
 // https://stackoverflow.com/questions/17954432/creating-a-daemon-in-linux/17955149#17955149

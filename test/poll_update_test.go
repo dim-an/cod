@@ -15,9 +15,10 @@
 package test
 
 import (
-	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPollUpdates(t *testing.T) {

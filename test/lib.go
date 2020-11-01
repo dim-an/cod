@@ -44,10 +44,10 @@ type Workbench struct {
 }
 
 func SetupWorkbench(t *testing.T) Workbench {
-    // We directly hardcode `/tmp` directory here.
-    // TravisCI uses some long name by default for MacOSX
-    // and that name exceeds the limit for unix domain socket
-    // path length.
+	// We directly hardcode `/tmp` directory here.
+	// TravisCI uses some long name by default for MacOSX
+	// and that name exceeds the limit for unix domain socket
+	// path length.
 	systemTmpDir, err := ioutil.TempDir("/tmp", "cod-test-")
 	util.VerifyPanic(err)
 

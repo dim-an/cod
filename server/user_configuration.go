@@ -17,11 +17,12 @@ package server
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+
 	"github.com/dim-an/cod/datastore"
 	"github.com/dim-an/cod/util"
 	"github.com/pelletier/go-toml"
-	"io/ioutil"
-	"os"
 )
 
 type Rule struct {

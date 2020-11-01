@@ -15,10 +15,11 @@
 package test
 
 import (
-	"github.com/stretchr/testify/require"
 	"path/filepath"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLearnList(t *testing.T) {

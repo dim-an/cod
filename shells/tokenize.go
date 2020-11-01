@@ -16,10 +16,11 @@ package shells
 
 import (
 	"fmt"
-	"github.com/dim-an/cod/shells/asciitable"
-	"github.com/dim-an/cod/util"
 	"io"
 	"strings"
+
+	"github.com/dim-an/cod/shells/asciitable"
+	"github.com/dim-an/cod/util"
 )
 
 type Token struct {
