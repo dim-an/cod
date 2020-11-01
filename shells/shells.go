@@ -66,8 +66,8 @@ function __cod_preexec_zsh() {
 
 function __cod_postexec_zsh() {
     if [[ "$?" == 0 ]] && [[ -n $__cod_recent_command_zsh ]] ; then
-        cod api postexec $$ "$__cod_recent_command_zsh"
-        source <(cod api poll-updates $$)
+        cod api postexec -- $$ "$__cod_recent_command_zsh"
+        source <(cod api poll-updates -- $$)
     fi
 
     return "$old_exit_code"
@@ -102,7 +102,7 @@ __cod_add_completions yt
 precmd_functions+=("__cod_postexec_zsh")
 preexec_functions+=("__cod_preexec_zsh")
 
-cod api attach $$ zsh
+cod api attach -- $$ zsh
 
 `
 
@@ -299,8 +299,8 @@ function __cod_postexec_bash() {
 		fi
 
 		command="${fc_out[@]:1}"
-		cod api postexec $$ "$command"
-		source <(cod api poll-updates $$)
+		cod api postexec -- $$ "$command"
+		source <(cod api poll-updates -- $$)
 		break
 	done
 
