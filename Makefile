@@ -1,4 +1,4 @@
-.PHONY: all build test release
+.PHONY: all build test install
 
 THISDIR := $(realpath $(dir $(firstword $(MAKEFILE_LIST))))
 GIT_SHA := $(shell git rev-parse HEAD)
@@ -13,6 +13,6 @@ test: build
 	cd ${THISDIR}
 	env COD_TEST_BINARY="${THISDIR}/cod" go test ./...
 
-release: build
+install: build
 	cd ${THISDIR}
 	python release.py
