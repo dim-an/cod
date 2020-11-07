@@ -24,8 +24,9 @@ import (
 )
 
 type AttachRequest struct {
-	Shell string
-	Pid   int
+	Shell         string
+	Pid           int
+	CodBinaryPath string
 }
 
 type AttachResponse struct {

@@ -225,8 +225,9 @@ func initMain(pid uint, shell string) {
 	{ // attach
 		rsp := server.AttachResponse{}
 		req := server.AttachRequest{
-			Pid:   int(pid),
-			Shell: shell,
+			Pid:           int(pid),
+			Shell:         shell,
+			CodBinaryPath: CodBinaryPath,
 		}
 
 		err = app.Client().Request(&req, &rsp)

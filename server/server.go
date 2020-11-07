@@ -287,7 +287,7 @@ func (s *serverImpl) handleAttach(req *AttachRequest, _ *util.Warner) (rsp Attac
 		s.initialized = true
 	}
 
-	scriptGenerator, err := shells.NewShellScriptGenerator(req.Shell)
+	scriptGenerator, err := shells.NewShellScriptGenerator(req.Shell, req.CodBinaryPath)
 	if err != nil {
 		return
 	}

@@ -42,8 +42,9 @@ func shellApiAttachMain(pid uint, shell string) {
 
 	rsp := server.AttachResponse{}
 	req := server.AttachRequest{
-		Pid:   int(pid),
-		Shell: shell,
+		Pid:           int(pid),
+		Shell:         shell,
+		CodBinaryPath: CodBinaryPath,
 	}
 
 	err = client.Request(&req, &rsp)

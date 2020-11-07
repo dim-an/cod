@@ -18,16 +18,23 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
+	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
-var AppName = "cod"
+// Contains path that was used to launch cod.
+// If relative or full path were used to launch app then CodBinaryPath is absolute and cleaned.
+// If cod was launched from PATH then this variable is just `cod` (or whatever is the name of binary).
+var CodBinaryPath = "cod"
+
 var GitSha = "<unknown-git-sha>"
+
 var Version = fmt.Sprintf("0.0.1rc (compiled from: %v)", GitSha)
 
 func fatal(err error) {
-	_, err = fmt.Fprintf(os.Stderr, "%v: error: %v\n", AppName, err)
+	_, err = fmt.Fprintf(os.Stderr, "%v: error: %v\n", path.Base(CodBinaryPath), err)
 	if err != nil {
 		panic(err)
 	}
@@ -40,14 +47,22 @@ func verifyFatal(err error) {
 	}
 }
 
-func getAppName() string {
+func getCodBinaryPath() string {
 	exe, err := os.Executable()
 	verifyFatal(err)
-	return path.Base(exe)
+	if !strings.ContainsRune(exe, os.PathSeparator) {
+		return exe
+	}
+	if filepath.IsAbs(exe) {
+		return filepath.Clean(exe)
+	}
+	result, err := filepath.Abs(exe)
+	verifyFatal(err)
+	return result
 }
 
 func main() {
-	AppName = getAppName()
+	CodBinaryPath = getCodBinaryPath()
 
 	//
 	// Arguments
