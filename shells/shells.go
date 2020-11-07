@@ -28,14 +28,18 @@ type ShellScriptGenerator interface {
 	ResetCommand(commandName string) []string
 }
 
-func NewShellScriptGenerator(shell string) (ShellScriptGenerator, error) {
+func NewShellScriptGenerator(shell string, codBinary string) (ShellScriptGenerator, error) {
 	switch shell {
 	case "bash":
-		return &Bash{}, nil
+		return &Bash{
+			codBinary,
+		}, nil
 	case "fish":
 		return &Fish{}, nil
 	case "zsh":
-		return &Zsh{}, nil
+		return &Zsh{
+			codBinary,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unknown shell: %v", shell)
 	}
@@ -54,9 +58,11 @@ func isCommand(opt string) bool {
 //
 
 type Zsh struct {
+	codCommandPath string
 }
 
 func (z *Zsh) GetPreamble() (script []string) {
+	codBinaryVar := "__COD_BINARY=" + quoteArg(z.codCommandPath)
 	scriptText := `
 __cod_recent_command_zsh=
 
@@ -66,8 +72,8 @@ function __cod_preexec_zsh() {
 
 function __cod_postexec_zsh() {
     if [[ "$?" == 0 ]] && [[ -n $__cod_recent_command_zsh ]] ; then
-        cod api postexec -- $$ "$__cod_recent_command_zsh"
-        source <(cod api poll-updates -- $$)
+        command $__COD_BINARY api postexec -- $$ "$__cod_recent_command_zsh"
+        source <(command $__COD_BINARY api poll-updates -- $$)
     fi
 
     return "$old_exit_code"
@@ -89,7 +95,7 @@ function __cod_complete_zsh() {
 	local cs
 	local c_word
 	c_word=$(($CURRENT - 1))
-	cs=("${(f)$(cod api complete-words -- $$ "$c_word" "${words[@]}")}")
+	cs=("${(f)$(command $__COD_BINARY api complete-words -- $$ "$c_word" "${words[@]}")}")
 	for c in "${cs[@]}" ; do
         compadd -- "$c"
     done
@@ -102,11 +108,14 @@ __cod_add_completions yt
 precmd_functions+=("__cod_postexec_zsh")
 preexec_functions+=("__cod_preexec_zsh")
 
-cod api attach -- $$ zsh
+command $__COD_BINARY api attach -- $$ zsh
 
 `
 
-	script = []string{scriptText}
+	script = []string{
+		codBinaryVar,
+		scriptText,
+	}
 	return
 }
 
@@ -164,6 +173,7 @@ func (f *Fish) GetPreamble() (lines []string) {
 //
 
 type Bash struct {
+	codCommandPath string
 }
 
 func (b *Bash) GenerateCompletions(executablePath string, _ []datastore.Completion) (lines []string) {
@@ -184,7 +194,8 @@ func (b *Bash) ResetCommand(executablePath string) (lines []string) {
 }
 
 func (b *Bash) GetPreamble() (lines []string) {
-	text := `
+	codBinaryVar := fmt.Sprintf("__COD_BINARY=%v", quoteArg(b.codCommandPath))
+	scriptText := `
 cod_enable_trace=${cod_enable_trace-false}
 
 __cod_ref_count=0
@@ -216,7 +227,7 @@ function __cod_clear_completions() {
 	$cod_enable_trace && __cod_ref_trace
 
 	local TO_KEEP
-	TO_KEEP=$(complete -p | cod api bash-clean-completions -- "$1")
+	TO_KEEP=$(complete -p | command $__COD_BINARY api bash-clean-completions -- "$1")
 	eval "$TO_KEEP"
 
 	$cod_enable_trace && __cod_unref_trace
@@ -240,7 +251,7 @@ function __cod_complete_bash() {
 	readarray -t FILE_COMPLETIONS < <(compgen -f -X "$FILTEROPT" -- "$2")
 
 	# Generate cod completions.
-	readarray -t COD_COMPLETIONS < <(cod api complete-words -- $$ "$COMP_CWORD" "${COMP_WORDS[@]}" 2> /dev/null)
+	readarray -t COD_COMPLETIONS < <(command $__COD_BINARY api complete-words -- $$ "$COMP_CWORD" "${COMP_WORDS[@]}" 2> /dev/null)
 
 	COMPREPLY=("${FILE_COMPLETIONS[@]}" "${COD_COMPLETIONS[@]}")
 
@@ -299,8 +310,8 @@ function __cod_postexec_bash() {
 		fi
 
 		command="${fc_out[@]:1}"
-		cod api postexec -- $$ "$command"
-		source <(cod api poll-updates -- $$)
+		command $__COD_BINARY api postexec -- $$ "$command"
+		source <(command $__COD_BINARY api poll-updates -- $$)
 		break
 	done
 
@@ -310,6 +321,9 @@ function __cod_postexec_bash() {
 
 PROMPT_COMMAND="__cod_postexec_bash ; $PROMPT_COMMAND"
 `
-	lines = []string{text}
+	lines = []string{
+		codBinaryVar,
+		scriptText,
+	}
 	return
 }

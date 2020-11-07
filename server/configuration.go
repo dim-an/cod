@@ -36,9 +36,6 @@ func DefaultConfiguration() (cfg Configuration, err error) {
 		return
 	}
 	appName := path.Base(executable)
-	if appName != "cod" {
-		appName = "cod-test"
-	}
 
 	usr, err := user.Current()
 	if err != nil {
