@@ -1,4 +1,4 @@
-// Copyright 2020 Dmitry Ermolov
+// Copyright 2020-2021 Dmitry Ermolov
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package shells
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/dim-an/cod/datastore"
 )
@@ -35,7 +34,9 @@ func NewShellScriptGenerator(shell string, codBinary string) (ShellScriptGenerat
 			codBinary,
 		}, nil
 	case "fish":
-		return &Fish{}, nil
+		return &Fish{
+			codBinary,
+		}, nil
 	case "zsh":
 		return &Zsh{
 			codBinary,
@@ -43,14 +44,6 @@ func NewShellScriptGenerator(shell string, codBinary string) (ShellScriptGenerat
 	default:
 		return nil, fmt.Errorf("unknown shell: %v", shell)
 	}
-}
-
-func isLongOption(opt string) bool {
-	return strings.HasPrefix(opt, "--")
-}
-
-func isCommand(opt string) bool {
-	return !strings.HasPrefix(opt, "-")
 }
 
 //
@@ -136,19 +129,13 @@ func (z *Zsh) ResetCommand(executablePath string) (script []string) {
 //
 
 type Fish struct {
+	codCommandPath string
 }
 
-func (f *Fish) GenerateCompletions(executablePath string, completions []datastore.Completion) (shellScript []string) {
-	for _, completion := range completions {
-		cmd := "complete --command " + executablePath
-		if isLongOption(completion.Flag) {
-			cmd += " --long-option " + strings.Trim(completion.Flag, "-")
-		} else if isCommand(completion.Flag) {
-			cmd += " --arguments " + completion.Flag
-		} else {
-			cmd += " --old-option " + strings.Trim(completion.Flag, "-")
-		}
-		shellScript = append(shellScript, cmd)
+func (f *Fish) GenerateCompletions(executablePath string, _ []datastore.Completion) (shellScript []string) {
+	shellScript = []string{
+		fmt.Sprintf("complete --path %s --arguments '(__cod_complete_fish)'",
+			executablePath),
 	}
 	return
 }
@@ -160,6 +147,34 @@ func (f *Fish) ResetCommand(commandName string) (shellScript []string) {
 }
 
 func (f *Fish) GetPreamble() (lines []string) {
+	lines = []string{
+		fmt.Sprintf("set -g __COD_BINARY %v", quoteArg(f.codCommandPath)),
+		`
+function __cod_complete_fish
+    set -l words (commandline --current-process --tokenize --cut-at-cursor)
+    set -l cword (count $words)
+    set -l words $words (commandline --current-token --cut-at-cursor)
+    set -l compreply (command $__COD_BINARY api complete-words -- %self "$cword" $words)
+    for entry in $compreply
+        echo $entry
+    end
+    return 0
+end
+
+function __fish_cod_get_completions
+end
+
+function __cod_postexec_fish --on-event fish_postexec
+	set -l cmd "$argv[1]"
+	if test -n "$cmd" -a "$status" -eq 0
+		command $__COD_BINARY api postexec -- %self "$cmd"
+	end
+	command $__COD_BINARY api poll-updates -- %self | source
+end
+
+cod api attach -- %self fish
+`,
+	}
 	return
 }
 
