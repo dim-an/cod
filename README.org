@@ -1,4 +1,4 @@
-[[https://travis-ci.org/dim-an/cod/][file:https://travis-ci.org/dim-an/cod.svg?branch=master]]
+[[https://github.com/dim-an/cod/actions][file:https://github.com/dim-an/cod/workflows/Go/badge.svg]]
 
 Cod is a completion daemon for ={bash,zsh}=.
 
