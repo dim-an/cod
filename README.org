@@ -1,6 +1,6 @@
 [[https://github.com/dim-an/cod/actions][file:https://github.com/dim-an/cod/workflows/Go/badge.svg]]
 
-Cod is a completion daemon for ={bash,zsh}=.
+Cod is a completion daemon for ={bash,fish,zsh}=.
 
 It detects usage of =--help= commands parses their output and generates
 auto-completions for your shell.
@@ -25,6 +25,12 @@ auto-completions for your shell.
    source <(cod init $$ zsh)
    #+END_SRC
 
+** Fish
+   Add to =~/.config/fish/config.fish=
+   #+BEGIN_SRC
+   cod init %self fish | source
+   #+END_SRC
+
 * Supported shells and operating systems
    =cod= is known to work with latest version of =zsh= (tested: =v5.5.1= and
    =5.7.1=) on macOS and Linux.
@@ -34,6 +40,10 @@ auto-completions for your shell.
 
    Note that default =bash= that is bundled with macOS is too old and =cod=
    doesn't support it.
+
+   =cod= works with latest version of =fish= (tested: =v3.1.2") on Linux
+   (I didn't have a chance to test it on macOS).
+   
 
 * Build
   [[https://golang.org/dl/][Go v1.13]] is required.
