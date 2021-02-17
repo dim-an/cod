@@ -101,15 +101,10 @@ function __cod_complete_zsh() {
     done
 	_path_files
 }
-
-__cod_clear_completions yt
-__cod_add_completions yt
-
 precmd_functions+=("__cod_postexec_zsh")
 preexec_functions+=("__cod_preexec_zsh")
 
 command $__COD_BINARY api attach -- $$ zsh
-
 `
 
 	script = []string{
