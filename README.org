@@ -46,7 +46,7 @@ auto-completions for your shell.
    
 
 * Build
-  [[https://golang.org/dl/][Go v1.13]] is required.
+  [[https://golang.org/dl/][Go v1.16]] is recommended.
 
   #+BEGIN_SRC
   git clone https://github.com/dim-an/cod.git
