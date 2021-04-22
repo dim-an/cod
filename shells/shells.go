@@ -24,7 +24,7 @@ import (
 type ShellScriptGenerator interface {
 	GetPreamble() []string
 	GenerateCompletions(executableName string, completions []datastore.Completion) []string
-	ResetCommand(commandName string) []string
+	ResetCommand(executablePath string) []string
 }
 
 func NewShellScriptGenerator(shell string, codBinary string) (ShellScriptGenerator, error) {
@@ -134,15 +134,16 @@ type Fish struct {
 
 func (f *Fish) GenerateCompletions(executablePath string, _ []datastore.Completion) (shellScript []string) {
 	shellScript = []string{
-		fmt.Sprintf("complete --path %s --arguments '(__cod_complete_fish)'",
-			executablePath),
+		fmt.Sprintf("complete --command %s --arguments '(__cod_complete_fish)'",
+			quoteArg(filepath.Base(executablePath))),
 	}
 	return
 }
 
-func (f *Fish) ResetCommand(commandName string) (shellScript []string) {
+func (f *Fish) ResetCommand(executablePath string) (shellScript []string) {
 	return []string{
-		fmt.Sprintf("complete --command %s --erase", commandName),
+		fmt.Sprintf("complete --command %s --erase",
+			quoteArg(filepath.Base(executablePath))),
 	}
 }
 
