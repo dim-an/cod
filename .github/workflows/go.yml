@@ -5,6 +5,12 @@ on:
     branches: [ '**' ]
   pull_request:
     branches: [ '**' ]
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Whether to create release (true / false)'
+        required: true
+        default: 'false'
 
 jobs:
   build:
