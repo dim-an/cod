@@ -12,7 +12,7 @@ auto-completions for your shell.
   for your OS and put it into your =$PATH=.
 
   Then you need to edit your init script and add few lines.
-  
+
 ** Bash
    Add to =~/.bashrc=
    #+BEGIN_SRC
@@ -23,6 +23,11 @@ auto-completions for your shell.
    Add to =~/.zshrc=
    #+BEGIN_SRC
    source <(cod init $$ zsh)
+   #+END_SRC
+   Or, use a plugin manager like zinit:
+   #+BEGIN_SRC
+   zinit wait lucid for \
+     dim-an/cod
    #+END_SRC
 
 ** Fish
@@ -43,7 +48,7 @@ auto-completions for your shell.
 
    =cod= works with latest version of =fish= (tested: =v3.1.2") on Linux
    (I didn't have a chance to test it on macOS).
-   
+
 
 * Build
   [[https://golang.org/dl/][Go v1.16]] is recommended.
@@ -95,7 +100,7 @@ auto-completions for your shell.
 ** How cod parses help output
    =cod= has generic parser that works with most of help pages and
    recognizes flags (starting with =-=) but doesn't recognize subcommands.
-  
+
    It also has a special parser tuned for
    [[https://docs.python.org/library/argparse.html][python argparse library]]
    that recognizes flags and subcommands.
