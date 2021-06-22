@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo -n "WITHOUT TESTS "
-find . -name '*.go' | grep -v /test/ | grep -v _test.go | xargs cat | wc -l
+find . -name '*.go' -and -not -regex '.*test.*' -exec cat '{}' + | wc -l
 
 echo -n "TESTS ONLY    "
-find . -name '*.go' | grep '_test.go\|/test/' | xargs cat | wc -l
+find . -name '*.go' -and -regex '.*test.*' -exec cat '{}' + | wc -l
 
 echo -n "ALL SOURCES   "
-find . -name '*.go' | xargs cat | wc -l
-
+find . -name '*.go' -exec cat '{}' + | wc -l
