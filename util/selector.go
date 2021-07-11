@@ -36,36 +36,13 @@ func CompileSelector(glob, homeDir string) (g Selector, err error) {
 
 	dir, name := filepath.Split(glob)
 
-	check := func(s string) error {
-		if strings.IndexRune(s, '*') != -1 {
-			return fmt.Errorf("bad glob: '*' and '**' are supported only as last component of the path")
-		}
-		return nil
-	}
-
 	if name == "*" {
-		err = check(dir)
-		if err != nil {
-			return
-		}
 		g = starGlob(dir)
 	} else if name == "**" {
-		err = check(dir)
-		if err != nil {
-			return
-		}
 		g = starStarGlob(dir)
 	} else if strings.ContainsRune(glob, os.PathSeparator) {
-		err = check(glob)
-		if err != nil {
-			return
-		}
 		g = noStarGlob(glob)
 	} else {
-		err = check(glob)
-		if err != nil {
-			return
-		}
 		g = baseNameGlob(glob)
 	}
 	return
