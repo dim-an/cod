@@ -19,9 +19,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/dim-an/cod/datastore"
 	"github.com/dim-an/cod/util"
+	"github.com/minio/minio/pkg/wildcard"
 	"github.com/pelletier/go-toml"
 )
 
@@ -86,7 +88,12 @@ func LoadUserConfigurationFromBytes(bytes []byte, homeDir string) (userConfigura
 
 func (cfg *UserConfiguration) GetExecutablePolicy(executablePath string) datastore.Policy {
 	for _, rule := range cfg.Rules {
-		ok := rule.compiledGlob.MatchString(executablePath)
+		ok := false
+		if strings.Contains(rule.Executable, "*") {
+			ok = wildcard.MatchSimple(rule.Executable, executablePath)
+		} else {
+			ok = rule.compiledGlob.MatchString(executablePath)
+		}
 		if ok {
 			return rule.Policy
 		}
