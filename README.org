@@ -33,7 +33,7 @@ auto-completions for your shell.
 ** Fish
    Add to =~/.config/fish/config.fish=
    #+BEGIN_SRC
-   cod init %self fish | source
+   cod init $fish_pid fish | source
    #+END_SRC
 
 * Supported shells and operating systems
