@@ -53,7 +53,12 @@ func DefaultConfiguration() (cfg Configuration, err error) {
 	}
 	dataDir = path.Join(dataDir, appName)
 
-	runDir := path.Join(dataDir, "var")
+	runDir := os.Getenv("XDG_RUNTIME_DIR")
+	if len(runDir) == 0 {
+		runDir = path.Join(dataDir, "var")
+	} else {
+		runDir = path.Join(runDir, appName)
+	}
 
 	homeDir := os.Getenv("HOME")
 
