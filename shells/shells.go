@@ -330,7 +330,7 @@ function __cod_postexec_bash() {
 	return $old_exit_code
 }
 
-PROMPT_COMMAND="__cod_postexec_bash ; $PROMPT_COMMAND"
+PROMPT_COMMAND="__cod_postexec_bash;$PROMPT_COMMAND"
 `
 	lines = []string{
 		codBinaryVar,
