@@ -36,6 +36,12 @@ auto-completions for your shell.
    cod init $fish_pid fish | source
    #+END_SRC
 
+** Fig
+
+Install ~cod~ with [[https://fig.io][Fig]] in bash, zsh, or fish with just one click.
+
+[[https://fig.io/plugins/other/cod_dim-an][https://fig.io/badges/install-with-fig.svg]]
+
 * Supported shells and operating systems
    =cod= is known to work with latest version of =zsh= (tested: =v5.5.1= and
    =5.7.1=) on macOS and Linux.
