@@ -16,8 +16,18 @@ package main
 
 var ExampleConfiguration = `# cod configuration
 # Put this configuration into '~/.config/cod/config.toml'.
-# 
+#
 # Lines starting with '#' are comments.
+
+
+#
+# Misc options
+# ============
+# 'command-execution-timout' controls how long cod waits for completion of command (in milliseconds).
+# Default value is 1000 (i.e. 1 second).
+#
+# command-execution-timeout = 1000
+
 
 #
 # Rules
@@ -52,7 +62,7 @@ var ExampleConfiguration = `# cod configuration
 #   [[rule]]
 #   executable = "/usr/bin/*"
 #   policy = 'ignore'
-# 
+#
 #   [[rule]]
 #   executable = "~/bin/*"
 #   policy = 'trust'

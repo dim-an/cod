@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"time"
 
 	"github.com/dim-an/cod/datastore"
 	"github.com/dim-an/cod/util"
@@ -32,7 +33,13 @@ type Rule struct {
 }
 
 type UserConfiguration struct {
-	Rules []Rule `toml:"rule"`
+	Rules                   []Rule `toml:"rule"`
+	commandExecutionTimeout int    `toml:"command-execution-timeout"`
+	// NOTE: defaults are set inside LoadUserConfigurationFromBytes
+}
+
+func (cfg *UserConfiguration) GetCommandExecutionTimeout() time.Duration {
+	return time.Millisecond * time.Duration(cfg.commandExecutionTimeout)
 }
 
 func initRule(rule *Rule, homeDir string) (err error) {
@@ -60,8 +67,12 @@ func LoadUserConfiguration(filename, homeDir string) (userConfiguration UserConf
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			err = nil
+			bytes = nil
+			// NB. we want to call LoadUserConfigurationFromBytes because it
+			// sets defaults
+		} else {
+			return
 		}
-		return
 	}
 	userConfiguration, err = LoadUserConfigurationFromBytes(bytes, homeDir)
 	if err != nil {
@@ -71,6 +82,8 @@ func LoadUserConfiguration(filename, homeDir string) (userConfiguration UserConf
 }
 
 func LoadUserConfigurationFromBytes(bytes []byte, homeDir string) (userConfiguration UserConfiguration, err error) {
+	userConfiguration.commandExecutionTimeout = 1000
+
 	err = toml.Unmarshal(bytes, &userConfiguration)
 	if err != nil {
 		return
@@ -80,6 +93,10 @@ func LoadUserConfigurationFromBytes(bytes []byte, homeDir string) (userConfigura
 		if err != nil {
 			return
 		}
+	}
+	if userConfiguration.commandExecutionTimeout < 0 {
+		err = fmt.Errorf("'command-execution-timeout' must not be negative")
+		return
 	}
 	return
 }
