@@ -1,14 +1,21 @@
 module github.com/dim-an/cod
 
-go 1.16
+go 1.19
+
+require (
+	github.com/mattn/go-sqlite3 v1.14.16
+	github.com/pelletier/go-toml v1.9.5
+	github.com/stretchr/testify v1.8.1
+	golang.org/x/crypto v0.5.0
+	golang.org/x/sys v0.4.0
+	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+)
 
 require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
-	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
-	github.com/mattn/go-sqlite3 v1.14.6
-	github.com/pelletier/go-toml v1.7.0
-	github.com/stretchr/testify v1.5.1
-	golang.org/x/crypto v0.0.0-20200406173513-056763e48d71
-	golang.org/x/sys v0.0.0-20200409092240-59c9f1ba88fa
-	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
