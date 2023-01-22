@@ -40,10 +40,6 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const (
-	HelpProcessExecutionTimeout = 1 * time.Second
-)
-
 type Server interface {
 	Serve() error
 	Close() error
@@ -501,14 +497,15 @@ func (s *serverImpl) runHelpCommand(command datastore.Command, ctx context.Conte
 }
 
 func (s *serverImpl) handleAddHelpPage(req *AddHelpPageRequest, _ *util.Warner) (rsp AddHelpPageResponse, err error) {
-	ctx, cancelFunc := context.WithTimeout(context.Background(), HelpProcessExecutionTimeout)
+	timeout := s.userConfiguration.GetCommandExecutionTimeout()
+	ctx, cancelFunc := context.WithTimeout(context.Background(), timeout)
 	helpPage, err := s.runHelpCommand(req.Command, ctx)
 	cancelFunc()
 	if err != nil {
 		if ctx.Err() != nil && errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			err = fmt.Errorf(
 				"timeout of %v exceeded `%v`",
-				HelpProcessExecutionTimeout,
+				timeout,
 				shells.Quote(req.Command.Args),
 			)
 		} else {
