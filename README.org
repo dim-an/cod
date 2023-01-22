@@ -57,7 +57,7 @@ Install ~cod~ with [[https://fig.io][Fig]] in bash, zsh, or fish with just one c
 
 
 * Build
-  [[https://golang.org/dl/][Go v1.16]] is recommended.
+  [[https://golang.org/dl/][Go v1.19]] is recommended.
 
   #+BEGIN_SRC
   git clone https://github.com/dim-an/cod.git
