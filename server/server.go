@@ -501,8 +501,9 @@ func (s *serverImpl) runHelpCommand(command datastore.Command, ctx context.Conte
 }
 
 func (s *serverImpl) handleAddHelpPage(req *AddHelpPageRequest, _ *util.Warner) (rsp AddHelpPageResponse, err error) {
-	ctx, _ := context.WithTimeout(context.Background(), HelpProcessExecutionTimeout)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), HelpProcessExecutionTimeout)
 	helpPage, err := s.runHelpCommand(req.Command, ctx)
+	cancelFunc()
 	if err != nil {
 		if ctx.Err() != nil && errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			err = fmt.Errorf(
@@ -629,8 +630,9 @@ func (s *serverImpl) handleUpdateHelpPageRequest(req *UpdateHelpPageRequest, war
 		}
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
+	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Second*1)
 	helpPage, err := s.runHelpCommand(cmd, ctx)
+	cancelCtx()
 	if err != nil {
 		warner.Warnf("error running %v: %v", shells.Quote(cmd.Args), err)
 		_, err = s.storage.RemoveHelpPage(req.Id)

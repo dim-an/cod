@@ -56,8 +56,7 @@ func TestParseCatHelp(t *testing.T) {
 	require.Equal(t, expected, *desc)
 }
 
-var quWriteFileHelp = `
-usage: qu write-file [-h] [--destination DESTINATION]
+var quWriteFileHelp = `usage: qu write-file [-h] [--destination DESTINATION]
                      [--compute]
                      [destination]
 
@@ -88,7 +87,7 @@ func TestParseQuWriteFileHelp(t *testing.T) {
 			{Flag: "--destination", Context: expectedContext},
 			{Flag: "--compute", Context: expectedContext},
 		},
-		CheckSum: "2fee90df109afb526a5fa229861677497d8baf14",
+		CheckSum: "54e9e119f4205bdde6a9315db1a67571385a6cf2",
 	}
 	require.Equal(t, expected, *desc)
 }
@@ -221,9 +220,8 @@ func TestParseLsHelp(t *testing.T) {
 }
 
 func TestMultipleFlagOccurrences(t *testing.T) {
-	fooHelp := `
-	usage: foo <flags>
-	
+	fooHelp := `usage: foo <flags>
+
 	--help show help
 	--foo some stuff
 	--bar other stuff (see also --foo)
@@ -239,15 +237,14 @@ func TestMultipleFlagOccurrences(t *testing.T) {
 			{Flag: "--foo"},
 			{Flag: "--bar"},
 		},
-		CheckSum: "1f32a5ebf4758e9a89fca0b0de6aed8761cf6f92",
+		CheckSum: "918a6cca7affef42dd94d07a5073676f0a43e3c7",
 	}
 	require.Equal(t, expected, *desc)
 }
 
 func TestJavaStyleInclusion(t *testing.T) {
-	fooHelp := `
-	usage: foo <flags>
-	
+	fooHelp := `usage: foo <flags>
+
 	--help show help
 	-v --verbose be verbose
 	-E --expand expand something
@@ -270,15 +267,14 @@ func TestJavaStyleInclusion(t *testing.T) {
 			{Flag: "--text"},
 			{Flag: "-a"},
 		},
-		CheckSum: "ab2bce9df3ee2ff08f41d3c8142f5e52ad6c1686",
+		CheckSum: "6776c5b37b6af1554b1af65fd95275117a379682",
 	}
 	require.Equal(t, expected, *desc)
 }
 
 func TestJavaStyle(t *testing.T) {
-	fooHelp := `
-	usage: foo <flags>
-	
+	fooHelp := `usage: foo <flags>
+
 	-h show help
 	-v be verbose
 	-E expand something
@@ -299,15 +295,14 @@ func TestJavaStyle(t *testing.T) {
 			{Flag: "-a"},
 			{Flag: "-vET"}, // it might be
 		},
-		CheckSum: "5854f53d08357f31d7c9e5d478b12a0a2236c976",
+		CheckSum: "7665663f96338ab2dee80c5e0c06b5b6e9c10533",
 	}
 	require.Equal(t, expected, *desc)
 }
 
 func TestOptionInVeryBeginningOfLine(t *testing.T) {
-	fooHelp := `
-usage: foo <flags>
-	
+	fooHelp := `usage: foo <flags>
+
 -h show help
 --foo foo option
 `
@@ -321,7 +316,7 @@ usage: foo <flags>
 			{Flag: "-h"},
 			{Flag: "--foo"}, // it might be
 		},
-		CheckSum: "da4c610510f4addb1089ae41896d09bfd0ccd790",
+		CheckSum: "ed099ed53e5217b2a71ab207209c309b44acf988",
 	}
 	require.Equal(t, expected, *desc)
 }
