@@ -323,6 +323,7 @@ func (argparseParser) Parse(context parseContext) (res *parseResult, err error) 
 	}
 	if usageStartIndex != 0 {
 		err = fmt.Errorf("usage is not at the beginning, doesn't look like argparse")
+		return
 	}
 
 	usageEndIndex := context.text.ParagraphEnd(usageStartIndex)
@@ -354,6 +355,18 @@ func (argparseParser) Parse(context parseContext) (res *parseResult, err error) 
 		case tryParseNamedPositionalParagraph(par, &usage, result):
 		case tryParseUnnamedPositionalParagraph(par, &usage, result):
 		}
+	}
+
+	for start := 0; start < len(context.text.lines); {
+		par := context.text.FindIndentedParagraph("options:", start)
+		if par == nil {
+			break
+		}
+		start = par.lineEnd
+		if len(par.children) == 0 {
+			continue
+		}
+		tryParseFlagsParagraph(par, &usage, result)
 	}
 
 	res = result

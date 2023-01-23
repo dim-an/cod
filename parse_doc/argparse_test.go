@@ -22,19 +22,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseArgparse(t *testing.T) {
-	parseCompletions := func(args []string, text string) (res []string) {
-		ctx, err := makeParseContext(args, text)
-		require.NoError(t, err)
+func parseArgparseCompletions(t *testing.T, args []string, text string) (res []string) {
+	ctx, err := makeParseContext(args, text)
+	require.NoError(t, err)
 
-		parseResult, err := makeArgparseParser().Parse(ctx)
-		require.NoError(t, err)
-		for idx := range parseResult.completions {
-			res = append(res, parseResult.completions[idx].Flag)
-		}
-		return
+	parseResult, err := makeArgparseParser().Parse(ctx)
+	require.NoError(t, err)
+	for idx := range parseResult.completions {
+		res = append(res, parseResult.completions[idx].Flag)
 	}
+	return
+}
 
+func TestParseArgparse(t *testing.T) {
 	require.Equal(
 		t,
 		[]string{
@@ -47,7 +47,7 @@ func TestParseArgparse(t *testing.T) {
 			"--help",
 			"--version",
 		},
-		parseCompletions([]string{"/usr/bin/asciinema", "--help"}, asciicinemaHelp),
+		parseArgparseCompletions(t, []string{"/usr/bin/asciinema", "--help"}, asciicinemaHelp),
 	)
 
 	require.Equal(
@@ -64,7 +64,33 @@ func TestParseArgparse(t *testing.T) {
 			"-v",
 			"--verbose",
 		},
-		parseCompletions([]string{"/home/user/.local/bin/do.py", "--help"}, doPyHelp),
+		parseArgparseCompletions(t, []string{"/home/user/.local/bin/do.py", "--help"}, doPyHelp),
+	)
+
+	require.Equal(
+		t,
+		[]string{
+			"-h",
+			"--help",
+			"--destination",
+			"--compute",
+		},
+		parseArgparseCompletions(t, []string{"/usr/bin/qu", "--help"}, quWriteFileHelp),
+	)
+}
+
+func TestParseArgparsePython310(t *testing.T) {
+	// In Python 3.10 we have newer format
+	require.Equal(
+		t,
+		[]string{
+			"sub-command1",
+			"sub-command2",
+			"-h",
+			"--help",
+			"--parser-argument",
+		},
+		parseArgparseCompletions(t, []string{"/usr/bin/argparse-python-3-10", "--help"}, argparsePython310Help),
 	)
 }
 
@@ -86,26 +112,26 @@ func TestParseArgparseContext(t *testing.T) {
 	require.Equal(
 		t,
 		[]datastore.Completion{
-			{"--append", argparseContext([]string{"rec"})},
-			{"--command", argparseContext([]string{"rec"})},
-			{"--env", argparseContext([]string{"rec"})},
-			{"--help", argparseContext([]string{"rec"})},
-			{"--idle-time-limit", argparseContext([]string{"rec"})},
-			{"--overwrite", argparseContext([]string{"rec"})},
-			{"--quiet", argparseContext([]string{"rec"})},
-			{"--raw", argparseContext([]string{"rec"})},
-			{"--stdin", argparseContext([]string{"rec"})},
-			{"--title", argparseContext([]string{"rec"})},
-			{"--yes", argparseContext([]string{"rec"})},
-			{"-c", argparseContext([]string{"rec"})},
-			{"-e", argparseContext([]string{"rec"})},
-			{"-h", argparseContext([]string{"rec"})},
-			{"-i", argparseContext([]string{"rec"})},
-			{"-q", argparseContext([]string{"rec"})},
-			{"-t", argparseContext([]string{"rec"})},
-			{"-y", argparseContext([]string{"rec"})},
+			{Flag: "--append", Context: argparseContext([]string{"rec"})},
+			{Flag: "--command", Context: argparseContext([]string{"rec"})},
+			{Flag: "--env", Context: argparseContext([]string{"rec"})},
+			{Flag: "--help", Context: argparseContext([]string{"rec"})},
+			{Flag: "--idle-time-limit", Context: argparseContext([]string{"rec"})},
+			{Flag: "--overwrite", Context: argparseContext([]string{"rec"})},
+			{Flag: "--quiet", Context: argparseContext([]string{"rec"})},
+			{Flag: "--raw", Context: argparseContext([]string{"rec"})},
+			{Flag: "--stdin", Context: argparseContext([]string{"rec"})},
+			{Flag: "--title", Context: argparseContext([]string{"rec"})},
+			{Flag: "--yes", Context: argparseContext([]string{"rec"})},
+			{Flag: "-c", Context: argparseContext([]string{"rec"})},
+			{Flag: "-e", Context: argparseContext([]string{"rec"})},
+			{Flag: "-h", Context: argparseContext([]string{"rec"})},
+			{Flag: "-i", Context: argparseContext([]string{"rec"})},
+			{Flag: "-q", Context: argparseContext([]string{"rec"})},
+			{Flag: "-t", Context: argparseContext([]string{"rec"})},
+			{Flag: "-y", Context: argparseContext([]string{"rec"})},
 			// FIXME: this is bug, we should only parse `-y` single time
-			{"-y", argparseContext([]string{"rec"})},
+			{Flag: "-y", Context: argparseContext([]string{"rec"})},
 		},
 		parseResult.completions,
 	)
@@ -190,4 +216,17 @@ optional arguments:
   -h, --help     show this help message and exit
   -q, --quiet    minimize logging
   -v, --verbose  maximize logging
+`
+
+var argparsePython310Help = `usage: argparse-python-3-10 [-h] [--parser-argument PARSER_ARGUMENT] {sub-command1,sub-command2} ...
+
+positional arguments:
+  {sub-command1,sub-command2}
+    sub-command1        some help
+    sub-command2        some help
+
+options:
+  -h, --help            show this help message and exit
+  --parser-argument PARSER_ARGUMENT
+                        some help
 `
