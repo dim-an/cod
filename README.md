@@ -22,8 +22,9 @@ auto-completions for your shell.
    ```
 
 ### Zsh
-Execute `compinstall` to initialize completion and add commands such as `compdef` then
-Add the following to your ```~/.zshrc```
+Execute `compinstall` to initialize completion and add commands such as `compdef` 
+
+Then add the following to your ```~/.zshrc```
 ```zsh
 source <(cod init $$ zsh)
 ```
