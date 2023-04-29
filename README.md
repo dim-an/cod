@@ -22,15 +22,16 @@ auto-completions for your shell.
    ```
 
 ### Zsh
-   Add the following to your ```~/.zshrc```
-   ```zsh
-   source <(cod init $$ zsh)
-   ```
-   Or, you can use a plugin manager like zinit:
-   ```zsh
-   zinit wait lucid for \
-     dim-an/cod
-   ```
+Execute `compinstall` to initialize completion and add commands such as `compdef` then
+Add the following to your ```~/.zshrc```
+```zsh
+source <(cod init $$ zsh)
+```
+Or, you can use a plugin manager like zinit:
+```zsh
+zinit wait lucid for \
+  dim-an/cod
+```
 
 ### Fish
    Add the following to ```~/.config/fish/config.fish```
