@@ -8,7 +8,7 @@ auto-completions for your shell.
 ![https://asciinema.org/a/h0SrrNvZVcqoSM4DNyEUrGtQh](https://github.com/TheBearodactyl/assets/blob/main/h0SrrNvZVcqoSM4DNyEUrGtQh.svg)
 
 # Install
-  
+
   You can either [download](https://github.com/dim-an/cod/releases) or [build](https://github.com/dim-an/cod/blob/master/README.org#Build) the ```cod``` binary
   for your OS and put it into your ```$PATH```.
 
@@ -22,6 +22,8 @@ auto-completions for your shell.
    ```
 
 ### Zsh
+   [Make sure](#compsys_init) completion system is initialized.
+
    Add the following to your ```~/.zshrc```
    ```zsh
    source <(cod init $$ zsh)
@@ -31,6 +33,30 @@ auto-completions for your shell.
    zinit wait lucid for \
      dim-an/cod
    ```
+
+#### <a name="compsys_init"></a> Initializing zsh completion system
+
+  `cod` requires initialized completion system.
+  In many cases it is already the case (e.g. if you are using oh-my-zsh or similar framework).
+
+  You can check whether your completion system is already initilized by using `type compdef` command:
+  ```
+  # Completion system IS initialized
+  $ type compdef
+  compdef is a shell function from /usr/share/zsh/functions/Completion/compinit
+
+  # Completion system IS NOT initialized
+  $ type compdef
+  compdef not found
+  ```
+
+  If you found that you need to initialize completion system you can do this by:
+
+   - calling `compinit` function in your `.zshrc` before initializing `cod` itself, or
+   - executing `compinstall` command from your shell, it will modify `.zshrc` file for you.
+
+  Also check [zsh documentation](https://zsh.sourceforge.io/Doc/Release/Completion-System.html).
+
 
 ### Fish
    Add the following to ```~/.config/fish/config.fish```
@@ -45,7 +71,7 @@ As an alternative, you can also install ```cod``` with [Fig](https://fig.io/plug
 ![https://fig.io/plugins/other/cod_dim-an](https://github.com/TheBearodactyl/assets/blob/main/install-with-fig.svg)
 
 ### Supported shells and operating systems
-   
+
    - zsh
    ```cod``` is known to work with latest version of ```zsh``` (tested: ```v5.5.1``` and
    ```5.7.1```) on macOS and Linux.
@@ -121,7 +147,7 @@ As an alternative, you can also install ```cod``` with [Fig](https://fig.io/plug
   The config file allows you to specify rules to either ignore or trust specified binaries
 
   ```cod example-config``` prints an example configuration to stdout.
-  
+
   ```cod example-config --create``` writes an example config to the default directory of said config file (```$XDG_CONFIG_HOME/cod/config.toml```)
 
 # Data directories

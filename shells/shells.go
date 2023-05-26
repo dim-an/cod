@@ -57,6 +57,14 @@ type Zsh struct {
 func (z *Zsh) GetPreamble() (script []string) {
 	codBinaryVar := "__COD_BINARY=" + quoteArg(z.codCommandPath)
 	scriptText := `
+
+if ! whence -w compdef &> /dev/null ; then
+	echo 'cod: Completion system is not initialized.' >&2
+	echo 'cod: You need to call "compinit" before initializing cod.' >&2
+	echo 'cod: Check: https://zsh.sourceforge.io/Doc/Release/Completion-System.html' >&2
+	return
+fi
+
 __cod_recent_command_zsh=
 
 function __cod_preexec_zsh() {
@@ -211,7 +219,7 @@ cod_enable_trace=${cod_enable_trace-false}
 
 __cod_ref_count=0
 function __cod_ref_trace() {
-	if [ "$((__cod_ref_count))" -eq 0 ] ; then 
+	if [ "$((__cod_ref_count))" -eq 0 ] ; then
 		echo "--> inside: ${FUNCNAME[@]}" >&2
 		set -x
 	fi
@@ -220,7 +228,7 @@ function __cod_ref_trace() {
 
 function __cod_unref_trace() {
 	: $((__cod_ref_count--))
-	if [ "$__cod_ref_count" -eq 0 ] ; then 
+	if [ "$__cod_ref_count" -eq 0 ] ; then
 		set +x
 	fi
 }
