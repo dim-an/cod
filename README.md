@@ -5,7 +5,7 @@ Cod is a completion daemon for ```bash```, ```fish```, and ```zsh```.
 It detects usage of ```--help``` commands, parses their output, and generates
 auto-completions for your shell.
 
-![https://asciinema.org/a/h0SrrNvZVcqoSM4DNyEUrGtQh](https://github.com/TheBearodactyl/assets/blob/main/h0SrrNvZVcqoSM4DNyEUrGtQh.svg)
+![https://asciinema.org/a/h0SrrNvZVcqoSM4DNyEUrGtQh](file:https://asciinema.org/a/h0SrrNvZVcqoSM4DNyEUrGtQh.svg)
 
 # Install
 
@@ -68,7 +68,7 @@ auto-completions for your shell.
 
 As an alternative, you can also install ```cod``` with [Fig](https://fig.io/plugins/other/cod_dim-an) in ```bash```, ```zsh```, or ```fish``` with just one click.
 
-![https://fig.io/plugins/other/cod_dim-an](https://github.com/TheBearodactyl/assets/blob/main/install-with-fig.svg)
+![https://fig.io/plugins/other/cod_dim-an](https://fig.io/badges/install-with-fig.svg)
 
 ### Supported shells and operating systems
 
