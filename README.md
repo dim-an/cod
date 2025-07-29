@@ -1,155 +1,207 @@
-![](https://img.shields.io/badge/GO-passing-green?style=for-the-badge&logo=Go)
-
-Cod is a completion daemon for ```bash```, ```fish```, and ```zsh```.
-
-It detects usage of ```--help``` commands, parses their output, and generates
-auto-completions for your shell.
-
-![https://asciinema.org/a/h0SrrNvZVcqoSM4DNyEUrGtQh](https://github.com/TheBearodactyl/assets/blob/main/h0SrrNvZVcqoSM4DNyEUrGtQh.svg)
-
-# Install
-
-  You can either [download](https://github.com/dim-an/cod/releases) or [build](https://github.com/dim-an/cod/blob/master/README.org#Build) the ```cod``` binary
-  for your OS and put it into your ```$PATH```.
-
-  After that, you will need to edit your init script (e.g. ```~/.config/fish/config.fish```, ```~/.zshrc```, ```~/.bashrc```) and add a few lines for
-  the daemon to work correctly.
-
-### Bash
-   Add the following to your ```~/.bashrc```
-   ```bash
-   source <(cod init $$ bash)
-   ```
-
-### Zsh
-   [Make sure](#compsys_init) completion system is initialized.
-
-   Add the following to your ```~/.zshrc```
-   ```zsh
-   source <(cod init $$ zsh)
-   ```
-   Or, you can use a plugin manager like zinit:
-   ```zsh
-   zinit wait lucid for \
-     dim-an/cod
-   ```
-
-#### <a name="compsys_init"></a> Initializing zsh completion system
-
-  `cod` requires initialized completion system.
-  In many cases it is already the case (e.g. if you are using oh-my-zsh or similar framework).
-
-  You can check whether your completion system is already initilized by using `type compdef` command:
-  ```
-  # Completion system IS initialized
-  $ type compdef
-  compdef is a shell function from /usr/share/zsh/functions/Completion/compinit
-
-  # Completion system IS NOT initialized
-  $ type compdef
-  compdef not found
-  ```
-
-  If you found that you need to initialize completion system you can do this by:
-
-   - calling `compinit` function in your `.zshrc` before initializing `cod` itself, or
-   - executing `compinstall` command from your shell, it will modify `.zshrc` file for you.
-
-  Also check [zsh documentation](https://zsh.sourceforge.io/Doc/Release/Completion-System.html).
-
-
-### Fish
-   Add the following to ```~/.config/fish/config.fish```
-   ```fish
-   cod init $fish_pid fish | source
-   ```
-
-### Fig
-
-As an alternative, you can also install ```cod``` with [Fig](https://fig.io/plugins/other/cod_dim-an) in ```bash```, ```zsh```, or ```fish``` with just one click.
-
-![https://fig.io/plugins/other/cod_dim-an](https://github.com/TheBearodactyl/assets/blob/main/install-with-fig.svg)
-
-### Supported shells and operating systems
-
-   - zsh
-   ```cod``` is known to work with latest version of ```zsh``` (tested: ```v5.5.1``` and
-   ```5.7.1```) on macOS and Linux.
-
-   - bash
-   ```cod``` also works with with latest version of ```bash``` (tested: ```4.4.20``` and
-   ```v5.0.11```) on Linux.
-
-     Note that default ```bash``` that is bundled with macOS is too old and ```cod```
-     doesn't support it.
-
-   - fish
-   ```cod``` works with latest version of ```fish``` (tested: ```v3.1.2```) on Linux
-   (I didn't have a chance to test it on macOS).
-
-
-# Building cod
-  It is recommended that you have at least [Go v1.19](https://golang.org/dl/) installed on your machine
-  ```bash
-  git clone https://github.com/dim-an/cod.git
-  cd cod
-  go build
-  ```
-
-  or
-
-  ```bash
-  go get -u github.com/dim-an/cod
-  ```
-
-# Overview
-  Cod checks each command you run in the shell. When cod detects usage of
-  ```--help``` flag it asks if you want it to learn this command. If you choose
-  to allow cod to learn this command cod will run command itself parse the
-  output and generate completions based on the ```--help``` output.
-
-## How cod detects help commands
-   Cod performs following checks to decide if command is help invocation:
-   1. checks if the ```--help``` flag is used
-   2. checks that command is simple i.e. doesn't contain any pipes, file
-     descriptor redirections, and other shell magic
-   3. checks that command exit code is 0.
-
-   If cod cannot automatically detect that your command is help invocation
-   you can use ```learn``` subcommand to learn this command anyway.
-
-## How cod runs help commands
-   Cod always uses absolute paths to run programs. (So it finds the binary in
-   ```$PATH``` or resolves relative path if required). Arguments other than
-   the binary path are left unchanged.
-
-   The current shell environment and current working directory will be
-   used.
-
-   If the program is successfully executed, cod will store:
-     - the absolute path to binary
-     - any used arguments
-     - the working directory
-     - environment variables
-   This info will be used to update command if required (check:
-   ```cod help update```).
-
-## How cod parses help output
-   ```cod``` has generic parser that works with most help pages and
-   recognizes flags (starting with ```-```), while not recognizing subcommands.
-
-   It also has a special parser tuned for [the python argparse library](https://docs.python.org/library/argparse.html)
-   that recognizes flags and subcommands.
-
-# Configuration
-  Cod will search for the default config file ```$XDG_CONFIG_HOME/cod/config.toml```.
-
-  The config file allows you to specify rules to either ignore or trust specified binaries
-
-  ```cod example-config``` prints an example configuration to stdout.
-
-  ```cod example-config --create``` writes an example config to the default directory of said config file (```$XDG_CONFIG_HOME/cod/config.toml```)
-
-# Data directories
-  ```cod``` uses ```$XDG_DATA_HOME/cod``` (default: ```~/.local/share/cod```) to store all
-  generated data files.
+{
+  "log": {
+    "level": "warn",
+    "output": "box.log",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "dns-remote",
+        "address": "udp://1.1.1.1",
+        "address_resolver": "dns-direct"
+      },
+      {
+        "tag": "dns-trick-direct",
+        "address": "https://sky.rethinkdns.com/",
+        "detour": "direct-fragment"
+      },
+      {
+        "tag": "dns-direct",
+        "address": "1.1.1.1",
+        "address_resolver": "dns-local",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns-local",
+        "address": "local",
+        "detour": "direct"
+      },
+      {
+        "tag": "dns-block",
+        "address": "rcode://success"
+      }
+    ],
+    "rules": [
+      {
+        "domain": "raw.githubusercontent.com",
+        "server": "dns-direct"
+      },
+      {
+        "domain_suffix": ".ir",
+        "geosite": "ir",
+        "server": "dns-direct"
+      },
+      {
+        "domain": "cp.cloudflare.com",
+        "server": "dns-remote",
+        "rewrite_ttl": 3000
+      }
+    ],
+    "final": "dns-remote",
+    "static_ips": {
+      "sky.rethinkdns.com": [
+        "188.114.96.3",
+        "188.114.97.3",
+        "2a06:98c1:3120::3",
+        "2a06:98c1:3121::3",
+        "104.17.148.22",
+        "104.17.147.22",
+        "104.18.0.48",
+        "104.18.1.48",
+        "2606:4700::6812:30",
+        "2606:4700::6812:130"
+      ]
+    },
+    "independent_cache": true
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "mtu": 9000,
+      "inet4_address": "172.19.0.1/28",
+      "auto_route": true,
+      "strict_route": true,
+      "endpoint_independent_nat": true,
+      "stack": "mixed",
+      "sniff": true,
+      "sniff_override_destination": true
+    },
+    {
+      "type": "mixed",
+      "tag": "mixed-in",
+      "listen": "127.0.0.1",
+      "listen_port": 2334,
+      "sniff": true,
+      "sniff_override_destination": true
+    },
+    {
+      "type": "direct",
+      "tag": "dns-in",
+      "listen": "127.0.0.1",
+      "listen_port": 6450
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "selector",
+      "tag": "select",
+      "outbounds": [
+        "auto",
+        "WARP § 0"
+      ],
+      "default": "auto"
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "WARP § 0"
+      ],
+      "url": "https://raw.githubusercontent.com/jvjuthkJjhh/cod/76885c9a23b91e611b4e31728a75fe50ccd82d5c/README.md",
+      "interval": "1m0s",
+      "idle_timeout": "10m0s"
+    },
+    {
+      "type": "wireguard",
+      "tag": "WARP § 0",
+      "local_address": [
+        "172.16.0.2/24",
+        "2606:4700:110:837d:ad68:424b:2a12:d3d7/128"
+      ],
+      "private_key": "wBYNDATB6G2Mx4aHQ15T9fVth3ZVhVvBqtox76Bxl24=",
+      "server": "raw.githubusercontent.com",
+      "server_port": 4233,
+      "peer_public_key": "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=",
+      "reserved": "OiMT",
+      "mtu": 1330
+    },
+    {
+      "type": "dns",
+      "tag": "dns-out"
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "direct",
+      "tag": "direct-fragment",
+      "tls_fragment": {
+        "enabled": true,
+        "size": "1-500",
+        "sleep": "0-500"
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "bypass"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ],
+  "route": {
+    "geoip": {
+      "path": "geo-assets/sagernet-sing-geoip-geoip.db"
+    },
+    "geosite": {
+      "path": "geo-assets/sagernet-sing-geosite-geosite.db"
+    },
+    "rules": [
+      {
+        "inbound": "dns-in",
+        "outbound": "dns-out"
+      },
+      {
+        "port": 53,
+        "outbound": "dns-out"
+      },
+      {
+        "clash_mode": "Direct",
+        "outbound": "direct"
+      },
+      {
+        "clash_mode": "Global",
+        "outbound": "select"
+      },
+      {
+        "domain_suffix": ".ir",
+        "geosite": "ir",
+        "geoip": "ir",
+        "outbound": "bypass"
+      }
+    ],
+    "final": "select",
+    "auto_detect_interface": true,
+    "override_android_vpn": true
+  },
+  "experimental": {
+    "cache_file": {
+      "enabled": true,
+      "path": "clash.db"
+    },
+    "clash_api": {
+      "external_controller": "127.0.0.1:6756",
+      "secret": "WfpjqOWxfcWTgzWC"
+    },
+    "quota": {
+      "enabled": true,
+      "period": 2592000,
+      "data_cap": 161061273600,
+      "on_exceed": "disable"
+    }
+  }
+}
