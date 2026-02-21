@@ -69,6 +69,33 @@ func TestLearn(t *testing.T) {
 	}, lines)
 }
 
+func TestLearnDryRun(t *testing.T) {
+	wb := SetupWorkbench(t)
+	defer wb.Close()
+
+	shellPid := strconv.Itoa(wb.LaunchFakeShell())
+	wb.RunCodCmd("init", shellPid, "bash")
+
+	// dry-run prints completions but does not add to DB
+	out := wb.RunCodCmd("learn", "--dry-run", "--", "binaries/cat.py", "--help")
+	require.Contains(t, out, "dry-run")
+	require.Contains(t, out, "completion(s)")
+	require.Contains(t, out, "--help")
+	require.Contains(t, out, "-n")
+
+	// list must be empty: nothing was saved
+	commands := wb.ParseCodListCommands(wb.RunCodCmd("list"))
+	require.Empty(t, commands)
+
+	// real learn adds the command; completions work
+	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
+	commands = wb.ParseCodListCommands(wb.RunCodCmd("list"))
+	require.Equal(t, []string{"binaries/cat.py --help"}, commands)
+
+	out = wb.RunCodCmd("api", "complete-words", shellPid, "--", "1", "binaries/cat.py", "-")
+	require.Contains(t, out, "--help")
+}
+
 func TestLearnBroken(t *testing.T) {
 	wb := SetupWorkbench(t)
 	defer wb.Close()

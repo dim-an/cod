@@ -518,6 +518,12 @@ func (s *serverImpl) handleAddHelpPage(req *AddHelpPageRequest, _ *util.Warner) 
 		return
 	}
 
+	if req.DryRun {
+		rsp.HelpPage = *helpPage
+		rsp.Status = datastore.AddHelpPageStatusDryRun
+		return
+	}
+
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 

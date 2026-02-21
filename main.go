@@ -90,6 +90,7 @@ func main() {
 
 	learn := app.Command("learn", "Learn new completions from help command.")
 	learnArgs := learn.Arg("subject", "Subject to learn.").Required().Strings()
+	learnDryRun := learn.Flag("dry-run", "Print found completions but do not save to database.").Bool()
 
 	list := app.Command("list", "List known commands.").Alias("ls")
 	list.Arg("selector", "Items to list.").StringsVar(&selectors)
@@ -146,7 +147,7 @@ func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	// commands
 	case learn.FullCommand():
-		learnMain(*learnArgs)
+		learnMain(*learnArgs, *learnDryRun)
 	case list.FullCommand():
 		listMain(selectors)
 	case init.FullCommand():

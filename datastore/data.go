@@ -41,6 +41,7 @@ type AddHelpPageStatus string
 const (
 	AddHelpPageStatusNew     = AddHelpPageStatus("new")
 	AddHelpPageStatusUpdated = AddHelpPageStatus("updated")
+	AddHelpPageStatusDryRun  = AddHelpPageStatus("dry-run")
 )
 
 type Command struct {
