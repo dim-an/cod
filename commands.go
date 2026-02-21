@@ -279,7 +279,7 @@ func apiCompleteWordsMain(_ uint, cword int, words []string) {
 	}
 }
 
-func learnMain(helpCommand []string) {
+func learnMain(helpCommand []string, dryRun bool) {
 	config, err := server.DefaultConfiguration()
 	verifyFatal(err)
 
@@ -294,6 +294,7 @@ func learnMain(helpCommand []string) {
 
 	req := server.AddHelpPageRequest{
 		Command: command,
+		DryRun:  dryRun,
 	}
 
 	client, err := server.NewClient(config)
@@ -304,6 +305,19 @@ func learnMain(helpCommand []string) {
 	var rsp server.AddHelpPageResponse
 	err = client.Request(&req, &rsp)
 	verifyFatal(err)
+
+	if rsp.Status == datastore.AddHelpPageStatusDryRun {
+		_, _ = fmt.Printf("cod: dry-run, found %d completion(s):\n", len(rsp.HelpPage.Completions))
+		for _, c := range rsp.HelpPage.Completions {
+			fmt.Println(c.Flag)
+		}
+		return
+	}
+
+	if dryRun && rsp.Status != datastore.AddHelpPageStatusDryRun {
+		_, _ = fmt.Fprintf(os.Stderr, "cod: --dry-run was set but daemon returned %q; try restarting the daemon (e.g. new shell and 'cod init')\n", rsp.Status)
+	}
+
 	err = summarizeLearning(&rsp)
 	verifyFatal(err)
 }

@@ -93,6 +93,7 @@ type RemoveCommandsResponse struct {
 type AddHelpPageRequest struct {
 	Command datastore.Command
 	Policy  datastore.Policy
+	DryRun  bool
 }
 
 type AddHelpPageResponse struct {
