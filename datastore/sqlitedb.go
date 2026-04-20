@@ -21,7 +21,7 @@ import (
 	"log"
 
 	"github.com/dim-an/cod/util"
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/ncruces/go-sqlite3/driver"
 )
 
 var CurrentSchemaVersion = 1
@@ -444,19 +444,16 @@ func updateSchema(db *sql.DB) (err error) {
 		return
 	}
 
-	_, err = db.Exec(`
-		begin;
-
-		create table Completion (
+	schemaStatements := []string{
+		`create table Completion (
 			CompletionId   integer not null primary key autoincrement,
 			HelpPageId     integer not null,
 			Flag           text not null,
 			Context        text,
 			foreign key (HelpPageId) references HelpPage(HelpPageId)
-		);
-		create index Completion_SourceId ON Completion (HelpPageId);
-
-		create table HelpPage (
+		)`,
+		`create index Completion_SourceId ON Completion (HelpPageId)`,
+		`create table HelpPage (
 		    HelpPageId          integer not null primary key autoincrement,
 			ExecutablePath      text,
 			HelpTextCheckSum    text,
@@ -465,15 +462,20 @@ func updateSchema(db *sql.DB) (err error) {
 			Policy              text,
 			unique              (ExecutablePath, HelpTextCheckSum),
 			unique              (ExecutablePath, CommandArgsCheckSum)
-		);
-		create index HelpPage_ExecutablePath ON HelpPage (ExecutablePath);
-		create index HelpPage_ExecutablePath_HelpTextCheckSum ON HelpPage (ExecutablePath, HelpTextCheckSum);
-		create index HelpPage_ExecutablePath_CommandArgsCheckSum ON HelpPage (ExecutablePath, CommandArgsCheckSum);
-
-		PRAGMA user_version = 1;
-
-		commit;
-	`, userVersion)
+		)`,
+		`create index HelpPage_ExecutablePath ON HelpPage (ExecutablePath)`,
+		`create index HelpPage_ExecutablePath_HelpTextCheckSum ON HelpPage (ExecutablePath, HelpTextCheckSum)`,
+		`create index HelpPage_ExecutablePath_CommandArgsCheckSum ON HelpPage (ExecutablePath, CommandArgsCheckSum)`,
+		`PRAGMA user_version = 1`,
+	}
+	err = withTransaction(db, func(tx *sql.Tx) error {
+		for _, stmt := range schemaStatements {
+			if _, err := tx.Exec(stmt); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 	return
 }
 
