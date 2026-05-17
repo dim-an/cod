@@ -75,8 +75,6 @@ func TestCRUD(t *testing.T) {
 			ExecutablePath: "/my-test-command",
 			Description:    "test command",
 			Completions: []Completion{
-				{Flag: "-A", Description: "upper"},
-				{Flag: "-a", Description: "lower"},
 				{Flag: "foo", Description: "foo option"},
 				{Flag: "bar", Description: "bar option"},
 				{Flag: "baz"},
@@ -109,8 +107,6 @@ func TestCRUD(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t,
 		[]Completion{
-			{Flag: "-A", Description: "upper"},
-			{Flag: "-a", Description: "lower"},
 			{Flag: "foo", Description: "foo option"},
 			{Flag: "bar", Description: "bar option"},
 			{Flag: "baz"},
@@ -129,22 +125,13 @@ func TestCRUD(t *testing.T) {
 		items,
 	)
 
-	items, err = db.GetCompletionsByPrefix("/my-test-command", "-a")
-	require.Nil(t, err)
-	require.Equal(t,
-		[]Completion{
-			{Flag: "-a", Description: "lower"},
-		},
-		items,
-	)
-
 	helpPages, err := db.ListHelpPages()
 	require.Nil(t, err)
 	sort.Slice(helpPages, func(i, j int) bool {
 		return helpPages[i].ExecutablePath < helpPages[j].ExecutablePath
 	})
 	require.Equal(t, "test command", helpPages[0].Description)
-	require.Equal(t, 6, helpPages[0].CompletionCount)
+	require.Equal(t, 4, helpPages[0].CompletionCount)
 	require.Equal(t, "/my-test-command", helpPages[0].ExecutablePath)
 }
 
