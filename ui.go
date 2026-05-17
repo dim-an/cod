@@ -90,6 +90,9 @@ var styleTable = map[string]string{
 }
 
 func (ui TerminalUI) Styled(style, text string) (res string) {
+	if os.Getenv("NO_COLOR") != "" || !terminal.IsTerminal(1) {
+		return text
+	}
 	control, ok := styleTable[style]
 	if !ok {
 		panic(fmt.Errorf("unknown style: %v", style))

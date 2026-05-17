@@ -72,6 +72,8 @@ func main() {
 	var pid uint
 	var foreground bool
 	var selectors []string
+	var showSelectors []string
+	var listFormat string
 	var createConfig bool
 
 	addShellArg := func(c *kingpin.CmdClause) *kingpin.CmdClause {
@@ -92,7 +94,11 @@ func main() {
 	learnArgs := learn.Arg("subject", "Subject to learn.").Required().Strings()
 
 	list := app.Command("list", "List known commands.").Alias("ls")
+	list.Flag("format", "Output format (table or plain).").Default("table").EnumVar(&listFormat, "table", "plain")
 	list.Arg("selector", "Items to list.").StringsVar(&selectors)
+
+	show := app.Command("show", "Show learned command details.")
+	show.Arg("selector", "Items to show.").Required().StringsVar(&showSelectors)
 
 	remove := app.Command("remove", "Forget known command").Alias("rm")
 	remove.Arg("selector", "Items to remove.").Required().StringsVar(&selectors)
@@ -148,7 +154,9 @@ func main() {
 	case learn.FullCommand():
 		learnMain(*learnArgs)
 	case list.FullCommand():
-		listMain(selectors)
+		listMain(selectors, listFormat)
+	case show.FullCommand():
+		showMain(showSelectors)
 	case init.FullCommand():
 		initMain(pid, shell)
 	case daemon.FullCommand():

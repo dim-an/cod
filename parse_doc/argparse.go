@@ -230,9 +230,26 @@ func parseArgparseUsage(lexer *usageLexer) (usage argparseUsage, err error) {
 var argWord = "[_a-zA-Z0-9][-_a-zA-Z0-9]*"
 
 var flagsLineRe = regexp.MustCompile(fmt.Sprintf("^ +-{1,2}%s", argWord))
-var flagRe = regexp.MustCompile(fmt.Sprintf("-{1,2}%s", argWord))
+var _ = regexp.MustCompile(fmt.Sprintf("-{1,2}%s", argWord))
 var argRe = regexp.MustCompile(fmt.Sprintf("^\\s*(%s)(,|\\s|$)", argWord))
 var unnamedSequenceRe = regexp.MustCompile(fmt.Sprintf("^\\s*\\{%s(,%s)*\\}$", argWord, argWord))
+
+func lineTreeDescription(node *lineTree, start int, stripMetavar bool) string {
+	parts := []string{lineDescriptionAfter(node.line, start, stripMetavar)}
+	for idx := range node.children {
+		parts = append(parts, strings.TrimSpace(node.children[idx].line))
+	}
+	return normalizeDescription(parts...)
+}
+
+func optionLineDescription(node *lineTree) (flags []string, description string) {
+	optionLine := parseOptionLine(node.line)
+	parts := []string{optionLine.description}
+	for idx := range node.children {
+		parts = append(parts, strings.TrimSpace(node.children[idx].line))
+	}
+	return optionLine.flags, normalizeDescription(parts...)
+}
 
 func tryParseFlagsParagraph(par *lineTree, usage *argparseUsage, res *parseResult) bool {
 	if len(par.children) == 0 || !flagsLineRe.MatchString(par.children[0].line) {
@@ -240,12 +257,13 @@ func tryParseFlagsParagraph(par *lineTree, usage *argparseUsage, res *parseResul
 	}
 
 	for idx := range par.children {
-		line := par.children[idx].line
-		allFlags := flagRe.FindAllString(line, -1)
+		node := &par.children[idx]
+		allFlags, description := optionLineDescription(node)
 		for _, flag := range allFlags {
-			res.completions = append(res.completions, datastore.Completion{
-				Flag:    flag,
-				Context: usage.flagContext,
+			res.AddCompletion(datastore.Completion{
+				Flag:        flag,
+				Description: description,
+				Context:     usage.flagContext,
 			})
 		}
 	}
@@ -255,17 +273,21 @@ func tryParseFlagsParagraph(par *lineTree, usage *argparseUsage, res *parseResul
 func extractPositionalArgs(par *lineTree, usage *argparseUsage, res *parseResult) bool {
 	var completions []datastore.Completion
 	for idx := range par.children[0].children {
-		line := par.children[0].children[idx].line
+		node := &par.children[0].children[idx]
+		line := node.line
 		arg := argRe.FindStringSubmatch(line)[1]
 		if len(arg) == 0 {
 			return false
 		}
 		completions = append(completions, datastore.Completion{
-			Flag:    arg,
-			Context: usage.flagContext,
+			Flag:        arg,
+			Description: lineTreeDescription(node, strings.Index(line, arg)+len(arg), false),
+			Context:     usage.flagContext,
 		})
 	}
-	res.completions = append(res.completions, completions...)
+	for _, completion := range completions {
+		res.AddCompletion(completion)
+	}
 	return true
 }
 
@@ -340,7 +362,9 @@ func (argparseParser) Parse(context parseContext) (res *parseResult, err error) 
 		return
 	}
 
-	result := &parseResult{}
+	result := &parseResult{
+		description: extractCommandDescription(context.text),
+	}
 	for start := 0; start < len(context.text.lines); {
 		par := context.text.FindIndentedParagraph("arguments:", start)
 		if par == nil {

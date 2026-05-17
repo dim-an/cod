@@ -309,15 +309,15 @@ func (s *serverImpl) handleCompleteWords(req *CompleteWordsRequest, _ *util.Warn
 		return
 	}
 
-	completions, err := s.storage.GetCompletions(req.Words[0])
-	if err != nil {
-		return
-	}
-
 	cWord := req.CWord
 	var word string
 	if 1 <= cWord && cWord < len(req.Words) {
 		word = req.Words[cWord]
+	}
+
+	completions, err := s.storage.GetCompletionsByPrefix(req.Words[0], word)
+	if err != nil {
+		return
 	}
 
 	if cWord < 1 {
@@ -388,7 +388,7 @@ func (s *serverImpl) handleListClients(_ *ListClientsRequest, _ *util.Warner) (r
 	return
 }
 
-var numberRe = regexp.MustCompile("^\\d+$")
+var numberRe = regexp.MustCompile(`^\d+$`)
 
 func (s *serverImpl) handleListCommands(req *ListCommandsRequest, _ *util.Warner) (rsp ListCommandsResponse, err error) {
 	idFilter := make(map[int64]bool)
@@ -412,18 +412,18 @@ func (s *serverImpl) handleListCommands(req *ListCommandsRequest, _ *util.Warner
 		}
 	}
 
-	commands, err := s.storage.ListCommands()
+	helpPages, err := s.storage.ListHelpPages()
 	if err != nil {
 		return
 	}
 
-	for id, command := range commands {
+	for _, helpPage := range helpPages {
 		take := false
-		if _, ok := idFilter[id]; ok {
+		if _, ok := idFilter[helpPage.Id]; ok {
 			take = true
-		} else if command != nil && len(command.Args) > 0 {
+		} else if helpPage.Command != nil && len(helpPage.Command.Args) > 0 {
 			for _, g := range globs {
-				if g.MatchString(command.Args[0]) {
+				if g.MatchString(helpPage.Command.Args[0]) {
 					take = true
 					break
 				}
@@ -432,8 +432,12 @@ func (s *serverImpl) handleListCommands(req *ListCommandsRequest, _ *util.Warner
 
 		if take {
 			item := ListCommandsResponseItem{
-				Id:      id,
-				Command: command,
+				Id:              helpPage.Id,
+				Command:         helpPage.Command,
+				ExecutablePath:  helpPage.ExecutablePath,
+				Description:     helpPage.Description,
+				Completions:     helpPage.Completions,
+				CompletionCount: helpPage.CompletionCount,
 			}
 			rsp.CommandItems = append(rsp.CommandItems, item)
 		}

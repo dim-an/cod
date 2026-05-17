@@ -19,23 +19,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/dim-an/cod/util"
 	_ "github.com/ncruces/go-sqlite3/driver"
 )
 
-var CurrentSchemaVersion = 1
+var CurrentSchemaVersion = 2
 
 type Storage interface {
 	GetCommandPolicy(args []string) (policy Policy, err error)
 
 	GetAllCompletions() (pages []HelpPage, err error)
 	GetCompletions(path string) (completions []Completion, err error)
+	GetCompletionsByPrefix(path, prefix string) (completions []Completion, err error)
 
 	AddHelpPage(helpPage *HelpPage, policy Policy) (status AddHelpPageStatus, err error)
 
 	// NB. This command might return null pointers in case some help page is broken.
 	ListCommands() (result map[int64]*Command, err error)
+	ListHelpPages() (result []HelpPageInfo, err error)
 
 	RemoveHelpPage(commandId int64) (path string, err error)
 
@@ -94,23 +97,15 @@ func withTransaction(db *sql.DB, f func(tx *sql.Tx) error) (err error) {
 	return
 }
 
-func getCompletionsForExecutable(tx *sql.Tx, executablePath string) (completions []Completion, err error) {
-	completionRows, err := tx.Query(`
-				select Completion.Flag, Completion.Context
-				from Completion inner join HelpPage on Completion.HelpPageId = HelpPage.HelpPageId
-				where HelpPage.ExecutablePath = ?
-			`, executablePath)
-	if err != nil {
-		return
-	}
+func scanCompletions(rows *sql.Rows) (completions []Completion, err error) {
 	defer func() {
-		_ = completionRows.Close()
+		_ = rows.Close()
 	}()
 
-	for completionRows.Next() {
+	for rows.Next() {
 		var contextBytes sql.NullString
 		completion := Completion{}
-		err = completionRows.Scan(&completion.Flag, &contextBytes)
+		err = rows.Scan(&completion.Flag, &contextBytes, &completion.Description)
 		util.VerifyPanic(err)
 		if contextBytes.Valid {
 			err = json.Unmarshal([]byte(contextBytes.String), &completion.Context)
@@ -120,8 +115,32 @@ func getCompletionsForExecutable(tx *sql.Tx, executablePath string) (completions
 		}
 		completions = append(completions, completion)
 	}
-	err = completionRows.Err()
+	err = rows.Err()
 	return
+}
+
+func getCompletionsForExecutable(tx *sql.Tx, executablePath string) (completions []Completion, err error) {
+	completionRows, err := tx.Query(`
+				select Completion.Flag, Completion.Context, Completion.Description
+				from Completion inner join HelpPage on Completion.HelpPageId = HelpPage.HelpPageId
+				where HelpPage.ExecutablePath = ?
+			`, executablePath)
+	if err != nil {
+		return
+	}
+	return scanCompletions(completionRows)
+}
+
+func getCompletionsForHelpPageId(tx *sql.Tx, helpPageId int64) (completions []Completion, err error) {
+	completionRows, err := tx.Query(`
+				select Completion.Flag, Completion.Context, Completion.Description
+				from Completion
+				where Completion.HelpPageId = ?
+			`, helpPageId)
+	if err != nil {
+		return
+	}
+	return scanCompletions(completionRows)
 }
 
 func (s *sqliteStorage) GetCompletions(executablePath string) (completions []Completion, err error) {
@@ -132,6 +151,27 @@ func (s *sqliteStorage) GetCompletions(executablePath string) (completions []Com
 			return
 		}
 		completions = append(completions, cur...)
+		return
+	})
+	return
+}
+
+func escapeLikePrefix(prefix string) string {
+	replacer := strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`)
+	return replacer.Replace(prefix) + "%"
+}
+
+func (s *sqliteStorage) GetCompletionsByPrefix(executablePath, prefix string) (completions []Completion, err error) {
+	err = withTransaction(s.db, func(tx *sql.Tx) (err error) {
+		rows, err := tx.Query(`
+				select Completion.Flag, Completion.Context, Completion.Description
+				from Completion inner join HelpPage on Completion.HelpPageId = HelpPage.HelpPageId
+				where HelpPage.ExecutablePath = ? and Completion.Flag like ? escape '\'
+			`, executablePath, escapeLikePrefix(prefix))
+		if err != nil {
+			return
+		}
+		completions, err = scanCompletions(rows)
 		return
 	})
 	return
@@ -216,8 +256,71 @@ func (s *sqliteStorage) ListCommands() (result map[int64]*Command, err error) {
 	return
 }
 
+func (s *sqliteStorage) ListHelpPages() (result []HelpPageInfo, err error) {
+	var items []HelpPageInfo
+	rows, err := s.db.Query(`
+		select
+			HelpPage.HelpPageId,
+			HelpPage.ExecutablePath,
+			HelpPage.Description,
+			HelpPage.CommandJson,
+			count(Completion.CompletionId)
+		from HelpPage
+		left join Completion on Completion.HelpPageId = HelpPage.HelpPageId
+		group by HelpPage.HelpPageId
+	`)
+	if err != nil {
+		return
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	for rows.Next() {
+		var commandJson []byte
+		item := HelpPageInfo{}
+		err = rows.Scan(&item.Id, &item.ExecutablePath, &item.Description, &commandJson, &item.CompletionCount)
+		if err != nil {
+			return
+		}
+
+		var command Command
+		err = json.Unmarshal(commandJson, &command)
+		if err != nil {
+			log.Printf("HelpPage %v has broken commandJson field: %v", item.Id, err)
+		} else {
+			item.Command = &command
+		}
+
+		items = append(items, item)
+	}
+	err = rows.Err()
+	if err != nil {
+		return
+	}
+
+	err = withTransaction(s.db, func(tx *sql.Tx) (err error) {
+		for idx := range items {
+			items[idx].Completions, err = getCompletionsForHelpPageId(tx, items[idx].Id)
+			if err != nil {
+				return
+			}
+		}
+		return
+	})
+	result = items
+	return
+}
+
 func (s *sqliteStorage) RemoveHelpPage(helpPageId int64) (executablePath string, err error) {
 	err = withTransaction(s.db, func(tx *sql.Tx) (err error) {
+		err = tx.QueryRow(
+			`select ExecutablePath from HelpPage where HelpPageId = ?`,
+			helpPageId,
+		).Scan(&executablePath)
+		if err != nil {
+			return
+		}
 		err = removeHelpPage(tx, helpPageId)
 		if err != nil {
 			return
@@ -241,7 +344,7 @@ func (s *sqliteStorage) GetCommandPolicy(args []string) (policy Policy, err erro
 
 func (s *sqliteStorage) GetAllCompletions() (pages []HelpPage, err error) {
 	rows, err := s.db.Query(`
-		select HelpPage.ExecutablePath, Completion.Flag
+		select HelpPage.ExecutablePath, HelpPage.Description, Completion.Flag, Completion.Context, Completion.Description
 		from Completion
 		inner join HelpPage on (HelpPage.HelpPageId = Completion.HelpPageId)
 	`)
@@ -252,24 +355,31 @@ func (s *sqliteStorage) GetAllCompletions() (pages []HelpPage, err error) {
 
 	helpPageMap := make(map[string]*HelpPage)
 	for rows.Next() {
-		var executablePath, flag string
-		err = rows.Scan(&executablePath, &flag)
+		var executablePath, helpPageDescription string
+		var contextBytes sql.NullString
+		completion := Completion{}
+		err = rows.Scan(&executablePath, &helpPageDescription, &completion.Flag, &contextBytes, &completion.Description)
 		if err != nil {
 			return
+		}
+		if contextBytes.Valid {
+			err = json.Unmarshal([]byte(contextBytes.String), &completion.Context)
+			if err != nil {
+				return
+			}
 		}
 
 		helpPage, ok := helpPageMap[executablePath]
 		if !ok {
 			helpPage = &HelpPage{
 				ExecutablePath: executablePath,
+				Description:    helpPageDescription,
 			}
 			helpPageMap[executablePath] = helpPage
 		}
 		helpPage.Completions = append(
 			helpPage.Completions,
-			Completion{
-				Flag: flag,
-			},
+			completion,
 		)
 	}
 	err = rows.Err()
@@ -293,7 +403,7 @@ type sqliteStorage struct {
 
 func insertCompletions(tx *sql.Tx, helpPageId int64, completions []Completion) (err error) {
 	completionStatement, err := tx.Prepare(`
-		insert into Completion(HelpPageId, Flag, Context) values (?, ?, ?)
+		insert into Completion(HelpPageId, Flag, Context, Description) values (?, ?, ?, ?)
 	`)
 	if err != nil {
 		return
@@ -305,7 +415,7 @@ func insertCompletions(tx *sql.Tx, helpPageId int64, completions []Completion) (
 		if err != nil {
 			return
 		}
-		_, err = completionStatement.Exec(helpPageId, completion.Flag, contextBytes)
+		_, err = completionStatement.Exec(helpPageId, completion.Flag, contextBytes, completion.Description)
 		if err != nil {
 			return
 		}
@@ -329,8 +439,9 @@ func removeAndMergeConflicting(tx *sql.Tx, executablePath string, commandCheckSu
 			select HelpPageId, CommandJson from HelpPage where ExecutablePath = ? and HelpTextCheckSum = ?
 			`, executablePath, helpPage.CheckSum,
 	).Scan(&helpPageId, &oldCommandJson)
-
-	if err == nil {
+	// FIX QF1002
+	switch err {
+	case nil:
 		var curCommandJson string
 		curCommandJson, err = commandToJson(helpPage.Command)
 		if err != nil {
@@ -352,9 +463,9 @@ func removeAndMergeConflicting(tx *sql.Tx, executablePath string, commandCheckSu
 		if err != nil {
 			return
 		}
-	} else if err == sql.ErrNoRows {
+	case sql.ErrNoRows:
 		err = nil
-	} else {
+	default:
 		return
 	}
 
@@ -362,8 +473,9 @@ func removeAndMergeConflicting(tx *sql.Tx, executablePath string, commandCheckSu
 			select HelpPageId from HelpPage where ExecutablePath = ? and CommandArgsCheckSum = ?
 			`, executablePath, commandCheckSum,
 	).Scan(&helpPageId)
-
-	if err == nil {
+	// FIX QF1002
+	switch err {
+	case nil:
 		if rowIdToReuse == nil || *rowIdToReuse > helpPageId {
 			var tmp = helpPageId
 			rowIdToReuse = &tmp
@@ -372,9 +484,9 @@ func removeAndMergeConflicting(tx *sql.Tx, executablePath string, commandCheckSu
 		if err != nil {
 			return
 		}
-	} else if err == sql.ErrNoRows {
+	case sql.ErrNoRows:
 		err = nil
-	} else {
+	default:
 		return
 	}
 
@@ -394,14 +506,16 @@ func insertHelpPage(tx *sql.Tx, executablePath string, rowIdToReplace *int64, co
 			                     HelpTextCheckSum,
 			                     CommandArgsCheckSum,
 			                     CommandJson,
-			                     Policy
-			) values (?, ?, ?, ?, ?, ?)
+			                     Policy,
+			                     Description
+			) values (?, ?, ?, ?, ?, ?, ?)
 		`, rowIdToReplace,
 		executablePath,
 		helpPage.CheckSum,
 		commandChecksum,
 		helpPageCommandJson,
-		policy)
+		policy,
+		helpPage.Description)
 	if err != nil {
 		return
 	}
@@ -450,9 +564,11 @@ func updateSchema(db *sql.DB) (err error) {
 			HelpPageId     integer not null,
 			Flag           text not null,
 			Context        text,
+			Description    text not null default '',
 			foreign key (HelpPageId) references HelpPage(HelpPageId)
 		)`,
 		`create index Completion_SourceId ON Completion (HelpPageId)`,
+		`create index Completion_SourceId_Flag ON Completion (HelpPageId, Flag)`,
 		`create table HelpPage (
 		    HelpPageId          integer not null primary key autoincrement,
 			ExecutablePath      text,
@@ -460,13 +576,14 @@ func updateSchema(db *sql.DB) (err error) {
 			CommandArgsCheckSum text,
 			CommandJson         text,
 			Policy              text,
+			Description         text not null default '',
 			unique              (ExecutablePath, HelpTextCheckSum),
 			unique              (ExecutablePath, CommandArgsCheckSum)
 		)`,
 		`create index HelpPage_ExecutablePath ON HelpPage (ExecutablePath)`,
 		`create index HelpPage_ExecutablePath_HelpTextCheckSum ON HelpPage (ExecutablePath, HelpTextCheckSum)`,
 		`create index HelpPage_ExecutablePath_CommandArgsCheckSum ON HelpPage (ExecutablePath, CommandArgsCheckSum)`,
-		`PRAGMA user_version = 1`,
+		`PRAGMA user_version = 2`,
 	}
 	err = withTransaction(db, func(tx *sql.Tx) error {
 		for _, stmt := range schemaStatements {
@@ -479,10 +596,25 @@ func updateSchema(db *sql.DB) (err error) {
 	return
 }
 
-func migrateSchema(userVersion int, _ *sql.DB) (err error) {
+func migrateSchema(userVersion int, db *sql.DB) (err error) {
 	switch userVersion {
 	case CurrentSchemaVersion:
 		break
+	case 1:
+		err = withTransaction(db, func(tx *sql.Tx) error {
+			statements := []string{
+				`alter table HelpPage add column Description text not null default ''`,
+				`alter table Completion add column Description text not null default ''`,
+				`create index Completion_SourceId_Flag ON Completion (HelpPageId, Flag)`,
+				`PRAGMA user_version = 2`,
+			}
+			for _, stmt := range statements {
+				if _, err := tx.Exec(stmt); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
 	default:
 		panic(fmt.Errorf("unknown db version: %v", userVersion))
 	}

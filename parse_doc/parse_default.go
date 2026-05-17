@@ -29,6 +29,7 @@ var javaStyleFlagRegexp = regexp.MustCompile(`^-[[:word:]]{2,}$`)
 var indentedSubCommandRegexp = regexp.MustCompile(`^\s+([-[:word:]]+)`)
 var subCommandRegexp = regexp.MustCompile(`^[[:word:]][-[:word:]]*$`)
 var wordRegexp = regexp.MustCompile(`\S+`)
+var optionDescriptionSeparatorRegexp = regexp.MustCompile(`\s{2,}`)
 
 type defaultParser struct{}
 
@@ -42,6 +43,60 @@ func (defaultParser) Name() string {
 
 func isJavaStyleFlag(flag string) bool {
 	return javaStyleFlagRegexp.MatchString(flag)
+}
+
+type parsedOptionLine struct {
+	flags       []string
+	description string
+}
+
+func isOptionSeparator(s string) bool {
+	fields := strings.FieldsFunc(s, func(r rune) bool {
+		switch r {
+		case ' ', '\t', ',', '|', '[', ']':
+			return true
+		default:
+			return false
+		}
+	})
+	for _, field := range fields {
+		if !isMetavar(field) {
+			return false
+		}
+	}
+	return true
+}
+
+func parseOptionLine(line string) parsedOptionLine {
+	matches := flagRegexp.FindAllStringSubmatchIndex(line, -1)
+	if len(matches) == 0 {
+		return parsedOptionLine{}
+	}
+
+	included := matches[:1]
+	for idx := 1; idx < len(matches); idx++ {
+		prevEnd := included[len(included)-1][3]
+		curBegin := matches[idx][2]
+		if !isOptionSeparator(line[prevEnd:curBegin]) {
+			break
+		}
+		included = append(included, matches[idx])
+	}
+
+	var flags []string
+	for _, match := range included {
+		flags = append(flags, line[match[2]:match[3]])
+	}
+
+	descriptionStart := included[len(included)-1][3]
+	if separator := optionDescriptionSeparatorRegexp.FindStringIndex(line[descriptionStart:]); separator != nil {
+		descriptionStart += separator[1]
+	}
+
+	return parsedOptionLine{
+		flags:       flags,
+		description: lineDescriptionAfter(line, descriptionStart, true),
+	}
 }
 
 func parseUsageSubCommand(args []string, text *preparedText) (res []string) {
@@ -70,7 +125,8 @@ func parseUsageSubCommand(args []string, text *preparedText) (res []string) {
 
 	// Then we make sure that the first word after usage is name of application (we check only basename).
 	executableBase := path.Base(args[0])
-	if words == nil || len(words) < 1 {
+
+	if len(words) < 1 {
 		return
 	}
 
@@ -118,18 +174,34 @@ outerLoop:
 }
 
 func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
-	res = &parseResult{}
+	res = &parseResult{
+		description: extractCommandDescription(context.text),
+	}
 
 	flagContext := datastore.FlagContext{
 		SubCommand: parseUsageSubCommand(context.args, context.text),
 	}
 
-	var completions []datastore.Completion
 	var discoveredFlagMap = make(map[string]bool)
 	var discoveredFlags []string
-	for _, line := range context.text.lines {
-		flagsMatch := flagRegexp.FindAllStringSubmatch(line, -1)
-		for _, match := range flagsMatch {
+	var descriptions = make(map[string]string)
+	for lineIdx, line := range context.text.lines {
+		optionLine := parseOptionLine(line)
+		description := normalizeDescription(
+			optionLine.description,
+			normalizeDescription(collectIndentedDescription(context.text.lines, lineIdx, computeIndent(line))...),
+		)
+		for _, flag := range optionLine.flags {
+			if !discoveredFlagMap[flag] {
+				discoveredFlags = append(discoveredFlags, flag)
+				discoveredFlagMap[flag] = true
+			}
+			if descriptions[flag] == "" {
+				descriptions[flag] = description
+			}
+		}
+		allMatches := flagRegexp.FindAllStringSubmatch(line, -1)
+		for _, match := range allMatches {
 			flag := match[1]
 			if !discoveredFlagMap[flag] {
 				discoveredFlags = append(discoveredFlags, flag)
@@ -153,7 +225,11 @@ func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 		if isGnuLike && isJavaStyleFlag(flag) {
 			continue
 		}
-		completions = append(completions, datastore.Completion{Flag: flag, Context: flagContext})
+		res.AddCompletion(datastore.Completion{
+			Flag:        flag,
+			Description: descriptions[flag],
+			Context:     flagContext,
+		})
 	}
 
 	// Now we are going to search for sub-commands.
@@ -197,14 +273,16 @@ func (defaultParser) Parse(context parseContext) (res *parseResult, err error) {
 					continue
 				}
 				subCommand := m[1]
-				completions = append(completions, datastore.Completion{Flag: subCommand, Context: flagContext})
+				res.AddCompletion(datastore.Completion{
+					Flag:        subCommand,
+					Description: lineDescriptionAfter(line, strings.Index(line, subCommand)+len(subCommand), false),
+					Context:     flagContext,
+				})
 			} else if indent < currentParagraphIndent {
 				state = Outer
 			} // else if indent > currentParagraphIndent { continue }
 		}
 		prevIndent = indent
 	}
-
-	res.completions = completions
 	return
 }

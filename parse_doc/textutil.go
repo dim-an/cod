@@ -16,6 +16,7 @@ package parse_doc
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"io"
 	"strings"
@@ -40,7 +41,29 @@ func makeParseContext(args []string, helpText string) (ctx parseContext, err err
 }
 
 type parseResult struct {
+	description string
 	completions []datastore.Completion
+}
+
+func completionKey(completion datastore.Completion) string {
+	contextBytes, err := json.Marshal(completion.Context)
+	if err != nil {
+		panic(err)
+	}
+	return completion.Flag + "\x00" + string(contextBytes)
+}
+
+func (res *parseResult) AddCompletion(completion datastore.Completion) {
+	key := completionKey(completion)
+	for idx := range res.completions {
+		if completionKey(res.completions[idx]) == key {
+			if res.completions[idx].Description == "" && completion.Description != "" {
+				res.completions[idx].Description = completion.Description
+			}
+			return
+		}
+	}
+	res.completions = append(res.completions, completion)
 }
 
 type preparedText struct {
@@ -79,7 +102,6 @@ func (pt *preparedText) FindFirstLine(pattern string) int {
 	return -1
 }
 
-//
 // Find first empty line starting from line `start'.
 func (pt *preparedText) ParagraphEnd(start int) int {
 	cur := start
@@ -144,4 +166,105 @@ func computeIndent(line string) int {
 		}
 	}
 	return -1
+}
+
+func normalizeDescription(parts ...string) string {
+	var cleaned []string
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			cleaned = append(cleaned, part)
+		}
+	}
+	return strings.Join(cleaned, " ")
+}
+
+func isMetavar(s string) bool {
+	if s == "" {
+		return false
+	}
+	s = strings.Trim(s, "[]{}(),")
+	for _, r := range s {
+		if r == '_' || r == '-' || ('0' <= r && r <= '9') {
+			continue
+		}
+		if !unicode.IsUpper(r) {
+			return false
+		}
+	}
+	return true
+}
+
+func lineDescriptionAfter(line string, start int, stripMetavar bool) string {
+	if start >= len(line) {
+		return ""
+	}
+	tail := strings.TrimSpace(line[start:])
+	if stripMetavar {
+		fields := strings.Fields(tail)
+		if len(fields) == 1 && isMetavar(fields[0]) {
+			tail = ""
+		} else if len(fields) > 1 && isMetavar(fields[0]) {
+			tail = strings.TrimSpace(strings.TrimPrefix(tail, fields[0]))
+		}
+	}
+	return tail
+}
+
+func collectIndentedDescription(lines []string, start int, baseIndent int) (description []string) {
+	for idx := start + 1; idx < len(lines); idx++ {
+		line := lines[idx]
+		indent := computeIndent(line)
+		if indent < 0 {
+			break
+		}
+		if indent <= baseIndent {
+			break
+		}
+		if strings.Contains(line, "-") {
+			break
+		}
+		description = append(description, strings.TrimSpace(line))
+	}
+	return
+}
+
+func extractCommandDescription(text *preparedText) string {
+	usageStart := text.FindFirstLine("usage:")
+	if usageStart < 0 {
+		usageStart = text.FindFirstLine("Usage:")
+	}
+	if usageStart < 0 {
+		return ""
+	}
+
+	usageEnd := text.ParagraphEnd(usageStart)
+	var usageDescriptions []string
+	for idx := usageStart + 1; idx < usageEnd; idx++ {
+		line := strings.TrimSpace(text.lines[idx])
+		if line != "" && !strings.HasPrefix(line, "[") && computeIndent(text.lines[idx]) == 0 {
+			usageDescriptions = append(usageDescriptions, line)
+		}
+	}
+	if len(usageDescriptions) > 0 {
+		return normalizeDescription(usageDescriptions...)
+	}
+
+	for idx := usageEnd + 1; idx < len(text.lines); idx++ {
+		line := strings.TrimSpace(text.lines[idx])
+		if line == "" {
+			continue
+		}
+		lower := strings.ToLower(line)
+		if strings.HasPrefix(line, "-") ||
+			computeIndent(text.lines[idx]) > 0 ||
+			strings.HasSuffix(lower, "arguments:") ||
+			strings.HasSuffix(lower, "options:") ||
+			strings.HasSuffix(lower, "commands:") {
+			return ""
+		}
+		end := text.ParagraphEnd(idx)
+		return normalizeDescription(text.lines[idx:end]...)
+	}
+	return ""
 }

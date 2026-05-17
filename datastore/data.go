@@ -50,15 +50,26 @@ type Command struct {
 }
 
 type Completion struct {
-	Flag    string
-	Context FlagContext
+	Flag        string
+	Description string
+	Context     FlagContext
 }
 
 type HelpPage struct {
 	ExecutablePath string
+	Description    string
 	Completions    []Completion
 	CheckSum       string
 	Command        Command
+}
+
+type HelpPageInfo struct {
+	Id              int64
+	ExecutablePath  string
+	Description     string
+	Command         *Command
+	Completions     []Completion
+	CompletionCount int
 }
 
 type FlagContext struct {

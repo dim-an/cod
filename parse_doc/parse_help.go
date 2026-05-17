@@ -62,6 +62,7 @@ func ParseHelp(args []string, help string) (*datastore.HelpPage, error) {
 
 	helpPage := datastore.HelpPage{
 		ExecutablePath: args[0],
+		Description:    res.description,
 		Completions:    res.completions,
 	}
 	helpPage.CheckSum = fmt.Sprintf("%x", sha1.Sum([]byte(help)))

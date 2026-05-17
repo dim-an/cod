@@ -70,7 +70,11 @@ type ListCommandsResponseItem struct {
 	Id int64
 
 	// In rare cases Command might be empty.
-	Command *datastore.Command
+	Command         *datastore.Command
+	ExecutablePath  string
+	Description     string
+	Completions     []datastore.Completion
+	CompletionCount int
 }
 type ListCommandsResponse struct {
 	CommandItems []ListCommandsResponseItem

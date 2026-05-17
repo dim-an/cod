@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/dim-an/cod/datastore"
 	"github.com/dim-an/cod/server"
@@ -31,27 +32,33 @@ import (
 func summarizeLearning(rsp *server.AddHelpPageResponse) (err error) {
 	var msg string
 	if rsp.Status == datastore.AddHelpPageStatusNew {
-		examples := ""
+		var examples []string
 
 		for i := range rsp.HelpPage.Completions {
-			if i > 0 {
-				examples += " "
-			}
 			cur := fmt.Sprintf("%q", rsp.HelpPage.Completions[i].Flag)
-			if i == 0 || len(examples+cur) < 35 {
-				examples += cur
+			if i == 0 || len(strings.Join(examples, " ")+cur) < 45 {
+				examples = append(examples, cur)
 			} else {
-				examples += fmt.Sprintf("and %v more", len(rsp.HelpPage.Completions)-i)
+				examples = append(examples, fmt.Sprintf("and %v more", len(rsp.HelpPage.Completions)-i))
 				break
 			}
 		}
 
-		msg = fmt.Sprintf("cod: learned completions: %s\n", examples)
+		msg = fmt.Sprintf(
+			"cod: learned %d completions for %s: %s\n",
+			len(rsp.HelpPage.Completions),
+			filepath.Base(rsp.HelpPage.ExecutablePath),
+			strings.Join(examples, " "),
+		)
 	} else {
 		if rsp.Status != datastore.AddHelpPageStatusUpdated {
 			panic(fmt.Errorf("unexpected status: %v", rsp.Status))
 		}
-		msg = fmt.Sprintf("cod: updated completions\n")
+		msg = fmt.Sprintf(
+			"cod: updated %d completions for %s\n",
+			len(rsp.HelpPage.Completions),
+			filepath.Base(rsp.HelpPage.ExecutablePath),
+		)
 	}
 
 	ui := NewUI()
@@ -138,12 +145,12 @@ func apiPostexecMain(pid uint, command string) {
 
 	// https://en.wikipedia.org/wiki/Box_Drawing_(Unicode_block)
 	shortOptions := fmt.Sprintf(
-		"┌──> %v\n└─── cod: learn this command? [yn?] > ",
+		"cod detected a help command:\n  %v\nlearn completions for it? [yn?] > ",
 		strings.Join(rsp.Args, " "),
 	)
 
 	fullOptions := "\n"
-	fullOptions += " y => Yes and enable autoupdates for this commands\n"
+	fullOptions += " y => Yes, learn completions and enable autoupdates for this command\n"
 	fullOptions += " n => Not now\n"
 	fullOptions += " ? => show this help\n"
 	fullOptions += " \n"
@@ -347,7 +354,7 @@ func (b byApplication) Less(i, j int) bool {
 	return lhs.Id < rhs.Id
 }
 
-func listMain(selectors []string) {
+func listMain(selectors []string, format string) {
 	app := NewApplication()
 	defer app.Close()
 
@@ -362,13 +369,87 @@ func listMain(selectors []string) {
 	verifyFatal(err)
 
 	sort.Sort(byApplication(rsp.CommandItems))
+	if format == "plain" {
+		for _, item := range rsp.CommandItems {
+			quoted := "<broken>"
+			if item.Command != nil {
+				quoted = shells.Quote(item.Command.Args)
+			}
+
+			fmt.Printf("%v\t%v\n", item.Id, quoted)
+		}
+		return
+	}
+
+	if len(rsp.CommandItems) == 0 {
+		return
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	_, err = fmt.Fprintln(w, "ID\tCommand\tDescription\tCompletions")
+	verifyFatal(err)
 	for _, item := range rsp.CommandItems {
 		quoted := "<broken>"
 		if item.Command != nil {
 			quoted = shells.Quote(item.Command.Args)
 		}
 
-		fmt.Printf("%v\t%v\n", item.Id, quoted)
+		description := item.Description
+		if description == "" {
+			description = "-"
+		}
+		_, err = fmt.Fprintf(w, "%v\t%v\t%v\t%v\n", item.Id, quoted, description, item.CompletionCount)
+		verifyFatal(err)
+	}
+	err = w.Flush()
+	verifyFatal(err)
+}
+
+func showMain(selectors []string) {
+	app := NewApplication()
+	defer app.Close()
+
+	req := server.ListCommandsRequest{
+		Selectors: selectors,
+	}
+	rsp := server.ListCommandsResponse{}
+	err := app.Client().Request(&req, &rsp)
+	verifyFatal(err)
+
+	sort.Sort(byApplication(rsp.CommandItems))
+	for itemIdx, item := range rsp.CommandItems {
+		if itemIdx > 0 {
+			fmt.Println()
+		}
+		quoted := "<broken>"
+		if item.Command != nil {
+			quoted = shells.Quote(item.Command.Args)
+		}
+		description := item.Description
+		if description == "" {
+			description = "-"
+		}
+		fmt.Printf("ID: %v\n", item.Id)
+		fmt.Printf("Command: %v\n", quoted)
+		fmt.Printf("Executable: %v\n", item.ExecutablePath)
+		fmt.Printf("Description: %v\n", description)
+		fmt.Printf("Completions: %v\n", item.CompletionCount)
+		if len(item.Completions) == 0 {
+			continue
+		}
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+		_, err = fmt.Fprintln(w, "Completion\tDescription")
+		verifyFatal(err)
+		for _, completion := range item.Completions {
+			completionDescription := completion.Description
+			if completionDescription == "" {
+				completionDescription = "-"
+			}
+			_, err = fmt.Fprintf(w, "%v\t%v\n", completion.Flag, completionDescription)
+			verifyFatal(err)
+		}
+		err = w.Flush()
+		verifyFatal(err)
 	}
 }
 
