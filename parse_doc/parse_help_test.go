@@ -45,11 +45,12 @@ func TestParseCatHelp(t *testing.T) {
 
 	expected := datastore.HelpPage{
 		ExecutablePath: "cat",
+		Description:    "Concatenate FILE(s) to standard output.",
 		Completions: []datastore.Completion{
-			{Flag: "-A"},
-			{Flag: "--show-all"},
-			{Flag: "-e"},
-			{Flag: "--help"},
+			{Flag: "-A", Description: "equivalent to -vET"},
+			{Flag: "--show-all", Description: "equivalent to -vET"},
+			{Flag: "-e", Description: "equivalent to -vE"},
+			{Flag: "--help", Description: "display this help and exit"},
 		},
 		CheckSum: "4a8d01dde2483ad006b8f5ac2f599f9369287730",
 	}
@@ -82,10 +83,10 @@ func TestParseQuWriteFileHelp(t *testing.T) {
 	expected := datastore.HelpPage{
 		ExecutablePath: "qu",
 		Completions: []datastore.Completion{
-			{Flag: "-h", Context: expectedContext},
-			{Flag: "--help", Context: expectedContext},
-			{Flag: "--destination", Context: expectedContext},
-			{Flag: "--compute", Context: expectedContext},
+			{Flag: "-h", Description: "show this help message and exit", Context: expectedContext},
+			{Flag: "--help", Description: "show this help message and exit", Context: expectedContext},
+			{Flag: "--destination", Description: "destination see also http://example.com/", Context: expectedContext},
+			{Flag: "--compute", Description: "compute file content", Context: expectedContext},
 		},
 		CheckSum: "54e9e119f4205bdde6a9315db1a67571385a6cf2",
 	}
@@ -233,9 +234,9 @@ func TestMultipleFlagOccurrences(t *testing.T) {
 	expected := datastore.HelpPage{
 		ExecutablePath: "foo",
 		Completions: []datastore.Completion{
-			{Flag: "--help"},
-			{Flag: "--foo"},
-			{Flag: "--bar"},
+			{Flag: "--help", Description: "show help"},
+			{Flag: "--foo", Description: "some stuff"},
+			{Flag: "--bar", Description: "other stuff (see also --foo)"},
 		},
 		CheckSum: "918a6cca7affef42dd94d07a5073676f0a43e3c7",
 	}
@@ -258,14 +259,14 @@ func TestJavaStyleInclusion(t *testing.T) {
 	expected := datastore.HelpPage{
 		ExecutablePath: "foo",
 		Completions: []datastore.Completion{
-			{Flag: "--help"},
-			{Flag: "-v"},
-			{Flag: "--verbose"},
-			{Flag: "-E"},
-			{Flag: "--expand"},
-			{Flag: "-T"},
-			{Flag: "--text"},
-			{Flag: "-a"},
+			{Flag: "--help", Description: "show help"},
+			{Flag: "-v", Description: "be verbose"},
+			{Flag: "--verbose", Description: "be verbose"},
+			{Flag: "-E", Description: "expand something"},
+			{Flag: "--expand", Description: "expand something"},
+			{Flag: "-T", Description: "expand something"},
+			{Flag: "--text", Description: "expand something"},
+			{Flag: "-a", Description: "same as -vET"},
 		},
 		CheckSum: "6776c5b37b6af1554b1af65fd95275117a379682",
 	}
@@ -288,11 +289,11 @@ func TestJavaStyle(t *testing.T) {
 	expected := datastore.HelpPage{
 		ExecutablePath: "foo",
 		Completions: []datastore.Completion{
-			{Flag: "-h"},
-			{Flag: "-v"},
-			{Flag: "-E"},
-			{Flag: "-T"},
-			{Flag: "-a"},
+			{Flag: "-h", Description: "show help"},
+			{Flag: "-v", Description: "be verbose"},
+			{Flag: "-E", Description: "expand something"},
+			{Flag: "-T", Description: "expand something"},
+			{Flag: "-a", Description: "same as -vET"},
 			{Flag: "-vET"}, // it might be
 		},
 		CheckSum: "7665663f96338ab2dee80c5e0c06b5b6e9c10533",
@@ -313,8 +314,8 @@ func TestOptionInVeryBeginningOfLine(t *testing.T) {
 	expected := datastore.HelpPage{
 		ExecutablePath: "foo",
 		Completions: []datastore.Completion{
-			{Flag: "-h"},
-			{Flag: "--foo"}, // it might be
+			{Flag: "-h", Description: "show help"},
+			{Flag: "--foo", Description: "foo option"}, // it might be
 		},
 		CheckSum: "ed099ed53e5217b2a71ab207209c309b44acf988",
 	}

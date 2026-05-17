@@ -16,6 +16,7 @@ package datastore
 
 import (
 	"crypto/sha1"
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -72,9 +73,12 @@ func TestCRUD(t *testing.T) {
 	status, err := db.AddHelpPage(
 		&HelpPage{
 			ExecutablePath: "/my-test-command",
+			Description:    "test command",
 			Completions: []Completion{
-				{Flag: "foo"},
-				{Flag: "bar"},
+				{Flag: "-A", Description: "upper"},
+				{Flag: "-a", Description: "lower"},
+				{Flag: "foo", Description: "foo option"},
+				{Flag: "bar", Description: "bar option"},
 				{Flag: "baz"},
 				{Flag: "qux"},
 			},
@@ -105,13 +109,104 @@ func TestCRUD(t *testing.T) {
 	require.Nil(t, err)
 	require.Equal(t,
 		[]Completion{
-			{Flag: "foo"},
-			{Flag: "bar"},
+			{Flag: "-A", Description: "upper"},
+			{Flag: "-a", Description: "lower"},
+			{Flag: "foo", Description: "foo option"},
+			{Flag: "bar", Description: "bar option"},
 			{Flag: "baz"},
 			{Flag: "qux"},
 		},
 		items,
 	)
+
+	items, err = db.GetCompletionsByPrefix("/my-test-command", "ba")
+	require.Nil(t, err)
+	require.Equal(t,
+		[]Completion{
+			{Flag: "bar", Description: "bar option"},
+			{Flag: "baz"},
+		},
+		items,
+	)
+
+	items, err = db.GetCompletionsByPrefix("/my-test-command", "-a")
+	require.Nil(t, err)
+	require.Equal(t,
+		[]Completion{
+			{Flag: "-a", Description: "lower"},
+		},
+		items,
+	)
+
+	helpPages, err := db.ListHelpPages()
+	require.Nil(t, err)
+	sort.Slice(helpPages, func(i, j int) bool {
+		return helpPages[i].ExecutablePath < helpPages[j].ExecutablePath
+	})
+	require.Equal(t, "test command", helpPages[0].Description)
+	require.Equal(t, 6, helpPages[0].CompletionCount)
+	require.Equal(t, "/my-test-command", helpPages[0].ExecutablePath)
+}
+
+func TestMigrationV1ToV2(t *testing.T) {
+	tmp, err := ioutil.TempFile("", "cod-sqlite-v1")
+	util.VerifyPanic(err)
+	filename := tmp.Name()
+	require.NoError(t, tmp.Close())
+	defer func() {
+		_ = os.Remove(filename)
+	}()
+
+	rawDb, err := sql.Open("sqlite3", filename)
+	require.NoError(t, err)
+	v1Statements := []string{
+		`create table Completion (
+			CompletionId   integer not null primary key autoincrement,
+			HelpPageId     integer not null,
+			Flag           text not null,
+			Context        text,
+			foreign key (HelpPageId) references HelpPage(HelpPageId)
+		)`,
+		`create index Completion_SourceId ON Completion (HelpPageId)`,
+		`create table HelpPage (
+		    HelpPageId          integer not null primary key autoincrement,
+			ExecutablePath      text,
+			HelpTextCheckSum    text,
+			CommandArgsCheckSum text,
+			CommandJson         text,
+			Policy              text,
+			unique              (ExecutablePath, HelpTextCheckSum),
+			unique              (ExecutablePath, CommandArgsCheckSum)
+		)`,
+		`create index HelpPage_ExecutablePath ON HelpPage (ExecutablePath)`,
+		`create index HelpPage_ExecutablePath_HelpTextCheckSum ON HelpPage (ExecutablePath, HelpTextCheckSum)`,
+		`create index HelpPage_ExecutablePath_CommandArgsCheckSum ON HelpPage (ExecutablePath, CommandArgsCheckSum)`,
+		`insert into HelpPage(ExecutablePath, HelpTextCheckSum, CommandArgsCheckSum, CommandJson, Policy)
+		 values('/legacy', 'legacy-help', 'legacy-command', '{"Args":["/legacy","--help"],"Env":null,"Dir":"/tmp"}', '')`,
+		`insert into Completion(HelpPageId, Flag, Context) values(1, '--legacy', '{}')`,
+		`PRAGMA user_version = 1`,
+	}
+	for _, stmt := range v1Statements {
+		_, err = rawDb.Exec(stmt)
+		require.NoError(t, err)
+	}
+	require.NoError(t, rawDb.Close())
+
+	storage, err := NewSqliteStorage(filename)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, storage.Close())
+	}()
+
+	completions, err := storage.GetCompletions("/legacy")
+	require.NoError(t, err)
+	require.Equal(t, []Completion{{Flag: "--legacy"}}, completions)
+
+	helpPages, err := storage.ListHelpPages()
+	require.NoError(t, err)
+	require.Len(t, helpPages, 1)
+	require.Equal(t, "", helpPages[0].Description)
+	require.Equal(t, 1, helpPages[0].CompletionCount)
 }
 
 func TestAddSamePage(t *testing.T) {

@@ -112,29 +112,47 @@ func TestParseArgparseContext(t *testing.T) {
 	require.Equal(
 		t,
 		[]datastore.Completion{
-			{Flag: "--append", Context: argparseContext([]string{"rec"})},
-			{Flag: "--command", Context: argparseContext([]string{"rec"})},
-			{Flag: "--env", Context: argparseContext([]string{"rec"})},
-			{Flag: "--help", Context: argparseContext([]string{"rec"})},
-			{Flag: "--idle-time-limit", Context: argparseContext([]string{"rec"})},
-			{Flag: "--overwrite", Context: argparseContext([]string{"rec"})},
-			{Flag: "--quiet", Context: argparseContext([]string{"rec"})},
-			{Flag: "--raw", Context: argparseContext([]string{"rec"})},
-			{Flag: "--stdin", Context: argparseContext([]string{"rec"})},
-			{Flag: "--title", Context: argparseContext([]string{"rec"})},
-			{Flag: "--yes", Context: argparseContext([]string{"rec"})},
-			{Flag: "-c", Context: argparseContext([]string{"rec"})},
-			{Flag: "-e", Context: argparseContext([]string{"rec"})},
-			{Flag: "-h", Context: argparseContext([]string{"rec"})},
-			{Flag: "-i", Context: argparseContext([]string{"rec"})},
-			{Flag: "-q", Context: argparseContext([]string{"rec"})},
-			{Flag: "-t", Context: argparseContext([]string{"rec"})},
-			{Flag: "-y", Context: argparseContext([]string{"rec"})},
-			// FIXME: this is bug, we should only parse `-y` single time
-			{Flag: "-y", Context: argparseContext([]string{"rec"})},
+			{Flag: "--append", Description: "append to existing recording", Context: argparseContext([]string{"rec"})},
+			{Flag: "--command", Description: "command to record, defaults to $SHELL", Context: argparseContext([]string{"rec"})},
+			{Flag: "--env", Description: "list of environment variables to capture, defaults to SHELL,TERM", Context: argparseContext([]string{"rec"})},
+			{Flag: "--help", Description: "show this help message and exit", Context: argparseContext([]string{"rec"})},
+			{Flag: "--idle-time-limit", Description: "limit recorded idle time to given number of seconds", Context: argparseContext([]string{"rec"})},
+			{Flag: "--overwrite", Description: "overwrite the file if it already exists", Context: argparseContext([]string{"rec"})},
+			{Flag: "--quiet", Description: "be quiet, suppress all notices/warnings (implies -y)", Context: argparseContext([]string{"rec"})},
+			{Flag: "--raw", Description: "save only raw stdout output", Context: argparseContext([]string{"rec"})},
+			{Flag: "--stdin", Description: "enable stdin recording, disabled by default", Context: argparseContext([]string{"rec"})},
+			{Flag: "--title", Description: "title of the asciicast", Context: argparseContext([]string{"rec"})},
+			{Flag: "--yes", Description: "answer \"yes\" to all prompts (e.g. upload confirmation)", Context: argparseContext([]string{"rec"})},
+			{Flag: "-c", Description: "command to record, defaults to $SHELL", Context: argparseContext([]string{"rec"})},
+			{Flag: "-e", Description: "list of environment variables to capture, defaults to SHELL,TERM", Context: argparseContext([]string{"rec"})},
+			{Flag: "-h", Description: "show this help message and exit", Context: argparseContext([]string{"rec"})},
+			{Flag: "-i", Description: "limit recorded idle time to given number of seconds", Context: argparseContext([]string{"rec"})},
+			{Flag: "-q", Description: "be quiet, suppress all notices/warnings (implies -y)", Context: argparseContext([]string{"rec"})},
+			{Flag: "-t", Description: "title of the asciicast", Context: argparseContext([]string{"rec"})},
+			{Flag: "-y", Description: "answer \"yes\" to all prompts (e.g. upload confirmation)", Context: argparseContext([]string{"rec"})},
 		},
 		parseResult.completions,
 	)
+}
+
+func TestParseArgparseDescription(t *testing.T) {
+	desc, err := ParseHelp([]string{"/usr/bin/asciinema", "--help"}, asciicinemaHelp)
+	require.NoError(t, err)
+	require.Equal(t, "Record and share your terminal sessions, the right way.", desc.Description)
+	require.Contains(t, desc.Completions, datastore.Completion{
+		Flag:        "rec",
+		Description: "Record terminal session",
+		Context: datastore.FlagContext{
+			Framework: "argparse",
+		},
+	})
+	require.Contains(t, desc.Completions, datastore.Completion{
+		Flag:        "--version",
+		Description: "show program's version number and exit",
+		Context: datastore.FlagContext{
+			Framework: "argparse",
+		},
+	})
 }
 
 var asciicinemaHelp = `usage: asciinema [-h] [--version] {rec,play,cat,upload,auth} ...

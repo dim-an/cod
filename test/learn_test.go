@@ -92,7 +92,7 @@ func TestLearnUpdateShorter(t *testing.T) {
 	wb.RunCodCmd("init", shellPid, "bash")
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--foo", "--help")
 
-	commands := wb.ParseCodListCommands(wb.RunCodCmd("list"))
+	commands := wb.ParseCodListCommands(wb.RunCodCmd("list", "--format", "plain"))
 	require.Equal(t,
 		[]string{
 			"binaries/cat.py --foo --help",
@@ -102,7 +102,7 @@ func TestLearnUpdateShorter(t *testing.T) {
 
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
 
-	commands = wb.ParseCodListCommands(wb.RunCodCmd("list"))
+	commands = wb.ParseCodListCommands(wb.RunCodCmd("list", "--format", "plain"))
 	require.Equal(t,
 		[]string{
 			"binaries/cat.py --help",
@@ -131,7 +131,7 @@ func TestLearnFromPATH(t *testing.T) {
 	}
 	wb.RunCodCmdModifiedEnv(modifiedEnv, "learn", "--", "cat.py", "--help")
 
-	out := wb.RunCodCmd("list")
+	out := wb.RunCodCmd("list", "--format", "plain")
 	parsed := wb.ParseCodListMap(out)
 	require.Equal(
 		t,
@@ -163,7 +163,7 @@ func TestMergeLearn(t *testing.T) {
 	}
 	wb.RunCodCmdModifiedEnv(modifiedEnv, "learn", "--", "foo", "--help")
 
-	out := wb.RunCodCmd("list")
+	out := wb.RunCodCmd("list", "--format", "plain")
 	parsed := wb.ParseCodListMap(out)
 	require.Equal(
 		t,
@@ -179,7 +179,7 @@ func TestMergeLearn(t *testing.T) {
 
 	wb.RunCodCmdModifiedEnv(modifiedEnv, "learn", "--", "foo", "--some-arg", "--help")
 
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	parsed = wb.ParseCodListMap(out)
 	require.Equal(
 		t,
@@ -193,7 +193,7 @@ func TestMergeLearn(t *testing.T) {
 	// Now we use `foo --help` again and this should merge our commands.
 	wb.RunCodCmdModifiedEnv(modifiedEnv, "learn", "--", "foo", "--help")
 
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	parsed = wb.ParseCodListMap(out)
 	require.Equal(
 		t,

@@ -33,7 +33,7 @@ func TestLearnList(t *testing.T) {
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
 	wb.RunCodCmd("learn", "--", "binaries/naval-fate.py", "--help")
 
-	out := wb.RunCodCmd("list")
+	out := wb.RunCodCmd("list", "--format", "plain")
 
 	commands := wb.ParseCodListCommands(out)
 
@@ -57,7 +57,7 @@ func TestLearnListRemove(t *testing.T) {
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
 	wb.RunCodCmd("learn", "--", "binaries/naval-fate.py", "--help")
 
-	out := wb.RunCodCmd("list")
+	out := wb.RunCodCmd("list", "--format", "plain")
 
 	commands := wb.ParseCodListCommands(out)
 
@@ -70,7 +70,7 @@ func TestLearnListRemove(t *testing.T) {
 	)
 
 	wb.RunCodCmd("remove", "1")
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	commands = wb.ParseCodListCommands(out)
 
 	require.Equal(t,
@@ -81,7 +81,7 @@ func TestLearnListRemove(t *testing.T) {
 	)
 
 	wb.RunCodCmd("remove", "2")
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	require.Equal(t, "", out)
 }
 
@@ -96,7 +96,7 @@ func TestLearnListBasenameSelector(t *testing.T) {
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
 	wb.RunCodCmd("learn", "--", "binaries/naval-fate.py", "--help")
 
-	out := wb.RunCodCmd("list", "cat.py")
+	out := wb.RunCodCmd("list", "--format", "plain", "cat.py")
 
 	commands := wb.ParseCodListCommands(out)
 
@@ -122,7 +122,7 @@ func TestLearnListPathSelector(t *testing.T) {
 	abs, err := filepath.Abs("binaries/naval-fate.py")
 	require.Nil(t, err)
 
-	out := wb.RunCodCmd("list", abs)
+	out := wb.RunCodCmd("list", "--format", "plain", abs)
 
 	commands := wb.ParseCodListCommands(out)
 
@@ -145,7 +145,7 @@ func TestLearnListIdSelector(t *testing.T) {
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
 	wb.RunCodCmd("learn", "--", "binaries/naval-fate.py", "--help")
 
-	out := wb.RunCodCmd("list", "2")
+	out := wb.RunCodCmd("list", "--format", "plain", "2")
 
 	commands := wb.ParseCodListCommands(out)
 
@@ -155,4 +155,41 @@ func TestLearnListIdSelector(t *testing.T) {
 		},
 		commands,
 	)
+}
+
+func TestLearnListRichDefault(t *testing.T) {
+	wb := SetupWorkbench(t)
+	defer wb.Close()
+
+	shellPid := wb.LaunchFakeShell()
+	wb.RunCodCmd("init", strconv.Itoa(shellPid), "bash")
+	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
+
+	out := wb.RunCodCmd("list")
+
+	require.Contains(t, out, "ID")
+	require.Contains(t, out, "Command")
+	require.Contains(t, out, "Description")
+	require.Contains(t, out, "Completions")
+	require.Contains(t, out, "binaries/cat.py --help")
+	require.Contains(t, out, "Concatenate FILE(s) to standard output.")
+	require.Contains(t, out, "19")
+}
+
+func TestShowCommandDetails(t *testing.T) {
+	wb := SetupWorkbench(t)
+	defer wb.Close()
+
+	shellPid := wb.LaunchFakeShell()
+	wb.RunCodCmd("init", strconv.Itoa(shellPid), "bash")
+	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
+
+	out := wb.RunCodCmd("show", "cat.py")
+
+	require.Contains(t, out, "ID: 1")
+	require.Contains(t, out, "binaries/cat.py --help")
+	require.Contains(t, out, "Description: Concatenate FILE(s) to standard output.")
+	require.Contains(t, out, "Completions: 19")
+	require.Contains(t, out, "--number")
+	require.Contains(t, out, "number all output lines")
 }

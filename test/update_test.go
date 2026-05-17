@@ -42,7 +42,7 @@ func TestUpdateReplace(t *testing.T) {
 	wb.CopyFile("binaries/foo_v2.py", tmpCat)
 	wb.RunCodCmd("update", "**")
 
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	parsed := wb.ParseCodListCommands(out)
 	require.Equal(t,
 		[]string{
@@ -68,14 +68,14 @@ func TestUpdateMerge(t *testing.T) {
 	wb.CopyFile("binaries/foo_v1.py", tmpCat)
 	wb.RunCodCmd("learn", "--", tmpCat, "--help")
 
-	out := wb.RunCodCmd("list")
+	out := wb.RunCodCmd("list", "--format", "plain")
 	parsed := wb.ParseCodListCommands(out)
 	require.Equal(t, len(parsed), 1)
 
 	wb.CopyFile("binaries/foo_v2.py", tmpCat)
 	wb.RunCodCmd("learn", "--", tmpCat, "gg", "--help")
 
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	parsed = wb.ParseCodListCommands(out)
 	require.Equal(
 		t,
@@ -86,7 +86,7 @@ func TestUpdateMerge(t *testing.T) {
 
 	wb.RunCodCmd("update", "**")
 
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	parsed = wb.ParseCodListCommands(out)
 	require.Equal(t, 1, len(parsed))
 }
@@ -100,13 +100,13 @@ func TestUpdateNoChange(t *testing.T) {
 	wb.RunCodCmd("init", shellPid, "bash")
 
 	wb.RunCodCmd("learn", "--", "binaries/cat.py", "--help")
-	out := wb.RunCodCmd("list")
+	out := wb.RunCodCmd("list", "--format", "plain")
 	parsed := wb.ParseCodListMap(out)
 	require.Equal(t, len(parsed), 1)
 
 	wb.RunCodCmd("update", "**")
 
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	parsed = wb.ParseCodListMap(out)
 	require.Equal(t, len(parsed), 1)
 }
@@ -122,7 +122,7 @@ func TestUpdateBroken(t *testing.T) {
 	tmpCat := wb.InTmpDataPath("cat1")
 	wb.CopyFile("binaries/cat.py", tmpCat)
 	wb.RunCodCmd("learn", "--", tmpCat, "--help")
-	out := wb.RunCodCmd("list")
+	out := wb.RunCodCmd("list", "--format", "plain")
 	parsed := wb.ParseCodListMap(out)
 	require.Equal(t, len(parsed), 1)
 
@@ -131,7 +131,7 @@ func TestUpdateBroken(t *testing.T) {
 
 	wb.RunCodCmd("update", "**")
 
-	out = wb.RunCodCmd("list")
+	out = wb.RunCodCmd("list", "--format", "plain")
 	parsed = wb.ParseCodListMap(out)
 	require.Equal(t, make(map[int]string), parsed)
 }
