@@ -7,8 +7,8 @@ require (
 	github.com/ncruces/go-sqlite3 v0.33.3
 	github.com/pelletier/go-toml v1.9.5
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/crypto v0.50.0
-	golang.org/x/sys v0.43.0
+	golang.org/x/crypto v0.52.0
+	golang.org/x/sys v0.45.0
 )
 
 require (
@@ -18,6 +18,6 @@ require (
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/xhit/go-str2duration/v2 v2.1.0 // indirect
-	golang.org/x/term v0.42.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
