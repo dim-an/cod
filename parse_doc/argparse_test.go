@@ -94,6 +94,37 @@ func TestParseArgparsePython310(t *testing.T) {
 	)
 }
 
+func TestParseArgparseSubcommandsWithoutDescriptions(t *testing.T) {
+	require.Equal(
+		t,
+		[]string{
+			"filter-operations",
+			"init-archive",
+			"build-stat",
+			"build-arc-info",
+			"-h",
+			"--help",
+		},
+		parseArgparseCompletions(
+			t,
+			[]string{"/usr/bin/ci-beholder.py", "parent", "--help"},
+			argparseSubcommandsWithoutDescriptionsHelp,
+		),
+	)
+
+	ctx, err := makeParseContext(
+		[]string{"/usr/bin/ci-beholder.py", "parent", "--help"},
+		argparseSubcommandsWithoutDescriptionsHelp,
+	)
+	require.NoError(t, err)
+	result, err := makeArgparseParser().Parse(ctx)
+	require.NoError(t, err)
+	require.Equal(t, datastore.FlagContext{
+		SubCommand: []string{"parent"},
+		Framework:  "argparse",
+	}, result.completions[0].Context)
+}
+
 func TestParseArgparseContext(t *testing.T) {
 	ctx, err := makeParseContext([]string{"/usr/bin/asciinema", "rec", "--help"}, asciinemaRecHelp)
 	require.NoError(t, err)
@@ -229,4 +260,15 @@ options:
   -h, --help            show this help message and exit
   --parser-argument PARSER_ARGUMENT
                         some help
+`
+
+var argparseSubcommandsWithoutDescriptionsHelp = `usage: ci-beholder.py parent [-h]
+                              {filter-operations,init-archive,build-stat,build-arc-info}
+                              ...
+
+positional arguments:
+  {filter-operations,init-archive,build-stat,build-arc-info}
+
+options:
+  -h, --help            show this help message and exit
 `

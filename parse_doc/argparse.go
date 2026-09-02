@@ -302,6 +302,15 @@ func tryParseUnnamedPositionalParagraph(par *lineTree, usage *argparseUsage, res
 	if !unnamedSequenceRe.MatchString(par.children[0].line) {
 		return false
 	}
+	if len(par.children[0].children) == 0 {
+		for _, positionalArgument := range usage.positionalArguments {
+			res.completions = append(res.completions, datastore.Completion{
+				Flag:    positionalArgument,
+				Context: usage.flagContext,
+			})
+		}
+		return true
+	}
 	return extractPositionalArgs(par, usage, res)
 }
 
