@@ -99,7 +99,7 @@ As an alternative, you can also install ```cod``` with [Fig](https://fig.io/plug
   or
 
   ```bash
-  go get -u github.com/dim-an/cod
+  go install github.com/dim-an/cod@latest
   ```
 
 # Overview
