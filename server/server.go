@@ -40,6 +40,11 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// A request is one JSON line carrying the whole shell environment (postexec
+// sends os.Environ()); 4 MiB is far above any real environment while still
+// bounding a hostile client.
+const maxRequestSize = 4 << 20
+
 type Server interface {
 	Serve() error
 	Close() error
@@ -135,6 +140,10 @@ func (s *serverImpl) handleConnectionProc(conn net.Conn) {
 	defer closeConn()
 
 	scanner := bufio.NewScanner(conn)
+	// bufio's default 64 KiB token limit is below a request that carries a large
+	// environment: Scan() then ends the connection without a response, and the
+	// client dies mid-write with "write unix ->...cod.sock: write: broken pipe".
+	scanner.Buffer(make([]byte, 0, 64*1024), maxRequestSize)
 	for scanner.Scan() {
 		reqData := scanner.Bytes()
 
@@ -152,6 +161,10 @@ func (s *serverImpl) handleConnectionProc(conn net.Conn) {
 		if err != nil {
 			break
 		}
+	}
+	// Without this an over-long request closes the connection silently.
+	if scanErr := scanner.Err(); scanErr != nil {
+		log.Printf("cannot read request: %v", scanErr)
 	}
 }
 
